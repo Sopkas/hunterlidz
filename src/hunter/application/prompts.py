@@ -4,7 +4,8 @@ Texts follow doc 11 v1.0: the executor instruction is verbatim; the research tas
 doc 11 research prompt plus the offer explanation and the provider encoding rules.
 Context order follows doc 09: stable rules -> team documents -> case claims -> task ->
 evidence. Team documents are trusted reference material; listing and website text is
-untrusted data and is framed as such (T-08). No secret is ever part of the context.
+untrusted data and is framed as such (T-08). No secret and no contact address
+(email, phone, Telegram) is ever part of the context: see domain.privacy.
 """
 
 from __future__ import annotations
@@ -16,6 +17,7 @@ from datetime import date
 from hunter.domain.cases import CaseClaim
 from hunter.domain.catalog import Icp, Product
 from hunter.domain.entities import DatePrecision, Evidence
+from hunter.domain.privacy import mask_contacts
 from hunter.domain.research import (
     BOOLEAN_FEATURES,
     MAX_CLAIMS,
@@ -218,7 +220,7 @@ def build_research_user(
         {
             "evidence_id": f"E{i}",
             "claim": e.claim,
-            "excerpt": e.excerpt,
+            "excerpt": mask_contacts(e.excerpt),
             "event_date": e.event_date.isoformat() if e.event_date else "",
             "date_precision": e.date_precision.value,
         }
@@ -453,8 +455,8 @@ def reply_schema() -> dict:
 def build_reply_user(*, body: str, recent_messages: Sequence[str], received_at: str) -> str:
     context = " | ".join(recent_messages) or "нет"
     return REPLY_TASK.format(
-        inbound_body=body,
-        recent_messages=context,
+        inbound_body=mask_contacts(body),
+        recent_messages=mask_contacts(context),
         received_at=received_at,
         recipient_timezone_or_null="null",
     )

@@ -8,6 +8,7 @@ platforms, so each canonical field accepts a list of aliases.
 from __future__ import annotations
 
 import csv
+import io
 import json
 from pathlib import Path
 
@@ -49,8 +50,15 @@ def read_listing_rows(path: Path) -> list[dict[str, object]]:
 
 
 def _read_csv(path: Path) -> list[dict]:
-    with path.open(encoding="utf-8-sig", newline="") as f:
-        return list(csv.DictReader(f))
+    """UTF-8 (with or without BOM) or Windows-1251 from Russian Excel; ',', ';' or tab."""
+    raw = path.read_bytes()
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        text = raw.decode("cp1251")
+    header = text.splitlines()[0] if text else ""
+    delimiter = max((";", ",", "\t"), key=header.count) if header else ","
+    return list(csv.DictReader(io.StringIO(text, newline=""), delimiter=delimiter))
 
 
 def _read_json(path: Path) -> list[dict]:

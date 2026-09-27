@@ -71,7 +71,7 @@ def test_unknown_values_are_none_with_reasons():
 
 def test_source_key_prefers_platform_id_then_url():
     a = parse_listing({"ext_id": "7", "url": "https://p.example/7", "title": "t"}, "fl", "RUB")
-    b = parse_listing({"url": "https://www.p.example/7?utm=1", "title": "t"}, "fl", "RUB")
+    b = parse_listing({"url": "https://www.p.example/7?utm_source=tg", "title": "t"}, "fl", "RUB")
     assert a.source_key == "fl:7"
     assert b.source_key == "url:p.example/7"
 

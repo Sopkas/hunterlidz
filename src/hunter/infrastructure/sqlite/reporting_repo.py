@@ -83,6 +83,10 @@ class ReportingRepo:
                    cp.name AS campaign, l.stage, l.priority, l.icp, l.product,
                    l.score_total, s.rules_version, l.prescore_total, l.prescore_version,
                    l.loss_reason,
+                   EXISTS (SELECT 1 FROM suppressions sp WHERE sp.lifted_at IS NULL AND (
+                       (sp.scope_type = 'company' AND sp.scope_id = l.company_id) OR
+                       (sp.scope_type = 'contact' AND sp.scope_id = v.contact_id)))
+                       AS contact_banned,
                    m.id AS message_id, m.status AS message_status,
                    m.current_version AS message_version, m.sent_at,
                    v.body AS message_body, v.channel AS recipient_channel,

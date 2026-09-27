@@ -44,7 +44,7 @@ SPAM = (
     r"накрутк",
     r"отзыв\w* за деньги",
     r"обнал",
-    r"\bдроп",
+    r"\bдроп(ы|ов|ам|ами|овод\w*)?\b",  # money mules; not «дропдаун»
 )
 NOT_A_BUYER = (
     r"ищу работу",
@@ -100,15 +100,24 @@ def matches(patterns: tuple[str, ...], text: str) -> list[str]:
     return [p for p in patterns if re.search(p, text)]
 
 
+def is_company_row(listing: Listing) -> bool:
+    return not listing.body.strip() and bool(listing.website_host) and bool(listing.company_name)
+
+
 def screen(listing: Listing, today: date, *, suppressed: bool = False) -> RejectReason | None:
-    """First matching reason in a fixed order, or None when the listing goes to scoring."""
+    """First matching reason in a fixed order, or None when the listing goes to scoring.
+
+    A company row (FR-01: a name and a website, no listing text) has nothing to screen by
+    text; it goes to research, which reads the website."""
+    if suppressed:
+        return RejectReason.SUPPRESSED
+    if is_company_row(listing):
+        return None
     text = listing.text
     if len(text.strip()) < MIN_TEXT_LENGTH:
         return RejectReason.EMPTY
     if matches(SPAM, text):
         return RejectReason.SPAM
-    if suppressed:
-        return RejectReason.SUPPRESSED
     if matches(NOT_A_BUYER, text):
         return RejectReason.NOT_A_BUYER
     if not matches(DEV_TASK, text):

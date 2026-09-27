@@ -32,6 +32,7 @@ EXPORT_FIELDS = (
     "prescore_total",
     "prescore_version",
     "loss_reason",
+    "contact_banned",
     "message_id",
     "message_status",
     "message_version",
@@ -55,7 +56,13 @@ def spreadsheet_safe(rows: list[dict[str, object]]) -> list[dict[str, object]]:
 def export_rows(deps: Deps, actor: User, *, with_contacts: bool) -> list[dict[str, object]]:
     require(actor, Permission.EXPORT)
     fields = EXPORT_FIELDS + (CONTACT_FIELDS if with_contacts else ())
-    rows = [{f: row[f] for f in fields} for row in deps.store.export_rows()]
+    rows = []
+    for source in deps.store.export_rows():
+        row = {f: source[f] for f in fields}
+        row["contact_banned"] = bool(source["contact_banned"])
+        if with_contacts and row["contact_banned"]:
+            row["recipient_address"] = None  # a banned address is never exported
+        rows.append(row)
     deps.audit(
         actor,
         "export",

@@ -15,7 +15,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
-from urllib.parse import urlsplit
+from urllib.parse import parse_qsl, urlencode, urlsplit
 
 from hunter.domain.catalog import Money
 
@@ -82,8 +82,24 @@ def normalize_text(value: str) -> str:
     return value.replace("ё", "е").replace("Ё", "Е").lower()
 
 
+TRACKING_PARAMS = frozenset(
+    {"fbclid", "gclid", "yclid", "ysclid", "_openstat", "from", "ref", "referrer", "source"}
+)
+
+
+def _clean_query(query: str) -> str:
+    """Keep parameters that identify the page (task.php?id=1 vs id=2), drop tracking ones."""
+    pairs = [
+        (k, v)
+        for k, v in parse_qsl(query, keep_blank_values=False)
+        if not k.lower().startswith("utm_") and k.lower() not in TRACKING_PARAMS
+    ]
+    return urlencode(sorted(pairs))
+
+
 def normalize_url(raw: str | None) -> str | None:
-    """Canonical http(s) URL without query string or fragment (tracking parameters)."""
+    """Canonical http(s) URL: lowercase host without "www.", no fragment, no trailing slash,
+    tracking parameters removed and the remaining query parameters sorted."""
     if not raw or not str(raw).strip():
         return None
     value = str(raw).strip()
@@ -95,7 +111,8 @@ def normalize_url(raw: str | None) -> str | None:
     host = parts.hostname.lower().removeprefix("www.")
     port = f":{parts.port}" if parts.port else ""
     path = parts.path.rstrip("/")
-    return f"{parts.scheme}://{host}{port}{path}"
+    query = _clean_query(parts.query)
+    return f"{parts.scheme}://{host}{port}{path}" + (f"?{query}" if query else "")
 
 
 def url_key(url: str) -> str:
