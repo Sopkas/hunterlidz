@@ -1,0 +1,4 @@
+{
+  "candidates": [{"content": {"role": "model"}, "finishReason": "STOP"}],
+  "usageMetadata": {"promptTokenCount": 50}
+}

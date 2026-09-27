@@ -22,6 +22,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
+from types import MappingProxyType
 
 from hunter.domain.cases import CaseClaim
 from hunter.domain.catalog import Priority, priority_for
@@ -43,6 +44,8 @@ class Score:
     rules_version: str = RULES_VERSION
 
     def __post_init__(self) -> None:
+        object.__setattr__(self, "components", MappingProxyType(dict(self.components)))
+        object.__setattr__(self, "reasons", MappingProxyType(dict(self.reasons)))
         if set(self.components) != set(COMPONENTS):
             raise ValueError("score needs exactly the five doc 04 components")
         for name, value in self.components.items():

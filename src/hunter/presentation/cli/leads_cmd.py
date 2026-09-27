@@ -10,7 +10,6 @@ from hunter.application import access
 from hunter.application.import_listings import import_listings
 from hunter.domain.catalog import Priority, Stage
 from hunter.domain.roles import Permission
-from hunter.infrastructure.listing_files import read_listing_rows
 
 REASON_TEXT = {
     "empty": "пусто",
@@ -41,7 +40,7 @@ def register(subparsers: argparse._SubParsersAction) -> None:
 
 
 def handle_import(app, args) -> int:
-    rows = read_listing_rows(args.file)
+    rows = app.read_listing_file(args.file)
     report = import_listings(
         app.deps,
         app.actor(),

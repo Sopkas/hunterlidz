@@ -8,9 +8,11 @@ is computed in domain.scoring from evidence-backed features (H-06).
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
+from types import MappingProxyType
 
 from hunter.domain.catalog import Icp
 from hunter.domain.listings import Listing
@@ -69,9 +71,13 @@ ICP_KEYWORDS: dict[Icp, tuple[str, ...]] = {
 @dataclass(frozen=True, slots=True)
 class Prescore:
     icp: Icp
-    components: dict[str, int]
-    reasons: dict[str, str]
+    components: Mapping[str, int]
+    reasons: Mapping[str, str]
     version: str = PRESCORE_VERSION
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "components", MappingProxyType(dict(self.components)))
+        object.__setattr__(self, "reasons", MappingProxyType(dict(self.reasons)))
 
     @property
     def total(self) -> int:

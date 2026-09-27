@@ -268,7 +268,11 @@ def _create_lead(
         prescore_total=triage.total,
     )
     payload = json.dumps(
-        {"components": triage.components, "reasons": triage.reasons, "total": triage.total},
+        {
+            "components": dict(triage.components),
+            "reasons": dict(triage.reasons),
+            "total": triage.total,
+        },
         ensure_ascii=False,
     )
     deps.store.add_lead(lead, payload, triage.version, deps.clock.now())

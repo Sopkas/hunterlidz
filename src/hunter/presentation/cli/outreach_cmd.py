@@ -17,7 +17,6 @@ from hunter.domain.replies import ReplyAction, ReplyClass
 from hunter.domain.roles import Permission
 from hunter.presentation.cli.common import resolve_lead_id, short
 from hunter.presentation.cli.review_cmd import resolve_message_id
-from hunter.runtime.config import ConfigError
 
 TASK_TEXT = {
     "follow_up": "follow-up",
@@ -136,11 +135,13 @@ def handle_reply(app, args) -> int:
         f"Ответ {receipt.inbound_id[:8]} записан. Цепочка на паузе: отменено задач "
         f"{receipt.tasks_cancelled}, неотправленных сообщений {receipt.messages_cancelled}."
     )
-    try:
-        llm, config = app.llm(), app.research_config()
-    except ConfigError as exc:
-        print(f"AI-классификация пропущена ({exc}). Разберите ответ вручную: hunter reply-review")
+    ai, reason = app.llm_or_reason()
+    if ai is None:
+        print(
+            f"AI-классификация пропущена ({reason}). Разберите ответ вручную: hunter reply-review"
+        )
         return 0
+    llm, config = ai
     proposal = outreach.classify_reply(app.deps, receipt.inbound_id, llm, app.knowledge, config)
     if proposal is None:
         print("AI не смог классифицировать ответ — разберите вручную.")

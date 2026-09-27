@@ -3,8 +3,8 @@
 Schema of the response (candidates / usageMetadata / finishReason) was checked against a
 live call on 2026-09-27 with gemini-flash-lite-latest; error bodies are ASSUMED to follow
 the documented {"error": {"code", "status"}} shape. The key goes in a header, never in the
-URL; environment proxies are disabled; the answer size is limited. Retries are decided by
-the calling use case so they stay inside the run budget.
+URL; environment proxies and redirects are disabled; the answer size is limited. Retries are
+decided by the calling use case so they stay inside the run budget.
 """
 
 from __future__ import annotations
@@ -22,14 +22,25 @@ MAX_RESPONSE_BYTES = 2_000_000
 _REFUSALS = {"SAFETY", "RECITATION", "PROHIBITED_CONTENT", "BLOCKLIST", "SPII"}
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """A redirect would carry the key header to another address: refuse it."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
 class GeminiClient:
-    def __init__(self, api_key: str, model: str, timeout: float = TIMEOUT_SECONDS) -> None:
+    def __init__(
+        self, api_key: str, model: str, timeout: float = TIMEOUT_SECONDS, opener=None
+    ) -> None:
         if not api_key:
             raise ValueError("Gemini API key is required")
         self.model = model
         self._key = api_key
         self._timeout = timeout
-        self._opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        self._opener = opener or urllib.request.build_opener(
+            urllib.request.ProxyHandler({}), _NoRedirect()
+        )
 
     def complete_json(
         self, system: str, user: str, schema: dict, max_output_tokens: int

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+from pathlib import Path
 
 from hunter.application import access
 from hunter.application.context import Deps
@@ -11,9 +12,11 @@ from hunter.application.research import ResearchConfig
 from hunter.domain.users import User
 from hunter.infrastructure.fetcher import SafeHttpFetcher
 from hunter.infrastructure.knowledge import FileKnowledgeBase
+from hunter.infrastructure.listing_files import read_listing_rows
+from hunter.infrastructure.sqlite import backup as sqlite_backup
 from hunter.infrastructure.sqlite.store import SqliteStore
 from hunter.infrastructure.system import SystemClock, UuidGenerator
-from hunter.runtime.config import Settings, llm_settings
+from hunter.runtime.config import ConfigError, Settings, llm_settings
 
 
 @dataclass(slots=True)
@@ -44,6 +47,23 @@ class App:
         return ResearchConfig(
             limits=cfg.limits, pricing=cfg.pricing, business_tz=self.settings.business_tz
         )
+
+    def llm_or_reason(self):
+        """(client, config) when AI is configured, otherwise (None, reason) — for optional AI."""
+        try:
+            return (self.llm(), self.research_config()), None
+        except ConfigError as exc:
+            return None, str(exc)
+
+    def read_listing_file(self, path: Path) -> list[dict[str, object]]:
+        return read_listing_rows(path)
+
+    def backup(self, target: Path) -> Path:
+        return sqlite_backup.backup(self.store.conn, target)
+
+    def restore(self, source: Path) -> sqlite_backup.RestoreReport:
+        self.store.close()
+        return sqlite_backup.restore(source, Path(self.settings.db_path))
 
     def business_today(self) -> date:
         """Calendar date in the business time zone (not the UTC date)."""

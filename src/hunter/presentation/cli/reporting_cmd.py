@@ -18,7 +18,6 @@ from hunter.application.reporting import (
 )
 from hunter.domain.metrics import REPLY_WINDOW_DAYS, show_rate
 from hunter.domain.roles import Permission
-from hunter.infrastructure.sqlite.backup import backup, restore
 
 
 def register(subparsers: argparse._SubParsersAction) -> None:
@@ -88,7 +87,7 @@ def handle_backup(app, args) -> int:
     access.require(app.actor(), Permission.BACKUP)
     stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     target = args.file or Path("backups") / f"hunter-{stamp}.db"
-    backup(app.store.conn, target)
+    app.backup(target)
     print(f"Резервная копия: {target}")
     return 0
 
@@ -98,9 +97,7 @@ def handle_restore(app, args) -> int:
     if not args.yes:
         print("Восстановление заменит текущую базу. Повторите с --yes.")
         return 1
-    db_path = Path(app.settings.db_path)
-    app.store.close()
-    report = restore(args.file, db_path)
+    report = app.restore(args.file)
     print(f"Восстановлено из {args.file}. Повторно применено запретов: {report.bans_reapplied}.")
     print(
         f"Проверка целостности: {report.integrity}; ошибок внешних ключей: "

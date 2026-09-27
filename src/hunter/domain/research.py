@@ -19,6 +19,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import date
 from enum import StrEnum
+from types import MappingProxyType
 
 from hunter.domain.catalog import Icp, Product
 from hunter.domain.entities import DatePrecision
@@ -102,6 +103,9 @@ class Research:
     why: str | None
     needs_review: bool
     problems: tuple[str, ...] = field(default=())
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "features", MappingProxyType(dict(self.features)))
 
     @property
     def insufficient(self) -> bool:
