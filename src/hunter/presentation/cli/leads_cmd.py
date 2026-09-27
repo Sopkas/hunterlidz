@@ -73,12 +73,14 @@ def handle_leads(app, args) -> int:
     if not leads:
         print("Лидов нет.")
         return 0
-    print(f"  {'ID':<8}  {'стадия':<10} {'score':>5} {'пред.':>5}  {'ICP':<18} объявление")
+    header = f"  {'ID':<8}  {'стадия':<10} {'score':>5} {'приор.':<6} {'пред.':>5}"
+    print(f"{header}  {'ICP':<18} объявление")
     for lead in leads:
         score = "—" if lead.score_total is None else str(lead.score_total)
         title = (app.store.listing_title(lead.id) or "")[:50]
         print(
-            f"  {lead.id[:8]:<8}  {lead.stage:<10} {score:>5} {lead.prescore_total or 0:>5}"
+            f"  {lead.id[:8]:<8}  {lead.stage:<10} {score:>5} {lead.priority or '—':<6}"
+            f" {lead.prescore_total or 0:>5}"
             f"  {lead.icp:<18} {title}"
         )
     return 0

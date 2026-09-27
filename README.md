@@ -40,6 +40,9 @@ python -m hunter claims load data/case_claims.json   # admin: реестр ке�
 python -m hunter lead <ID>                           # карточка: источники, evidence, контакты
 python -m hunter sources fetch <ID>                  # прочитать сайт компании (если есть домен)
 python -m hunter research --limit 20                 # AI-исследование лучших лидов
+python -m hunter queue                               # лиды, готовые к сообщению (score ≥ 80 и проверки)
+python -m hunter score <ID>                          # пересчитать score по последнему research
+python -m hunter allow-contact <ID> --reason "…"     # исключение оператора для WARM
 ```
 
 Для `research` в `.env` нужны `HUNTER_LLM`, ключ провайдера, тариф (`0` для бесплатного Gemini), `COST_CURRENCY`, `RUN_COST_CAP`, `DAILY_COST_CAP` — см. `.env.example`. Без них — код 2 до любых сетевых вызовов.

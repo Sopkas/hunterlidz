@@ -6,7 +6,7 @@ documents, case claims, task, evidence) -> check budget -> call the model -> val
 (research_v1.1) -> at most one format correction -> store the run with usage and cost.
 Temporary provider errors are retried inside the same call budget. Exhausting the budget
 stops the run with an explicit status (T-19). A worker that lost its lease stores nothing
-(T-18). The score is not computed here; see H-06.
+(T-18). A stored result is scored by code in the same transaction (H-06).
 """
 
 from __future__ import annotations
@@ -32,6 +32,7 @@ from hunter.application.prompts import (
     evidence_aliases,
     research_schema,
 )
+from hunter.application.scoring import apply_score
 from hunter.domain.budget import BudgetExceeded, Limits, Pricing, RunBudget, estimate_tokens
 from hunter.domain.catalog import Icp, Stage
 from hunter.domain.modes import Operation
@@ -247,6 +248,8 @@ class _Pipeline:
                     needs_review=research.needs_review,
                     at=now,
                 )
+                today = self._today()
+                apply_score(self.deps, self.worker, store.lead(lead.id), research, run_id, today)
             job_status = "done" if status != "failed" else "failed"
             store.finish_job(job.id, token, job_status, now, error_code)
             self.deps.audit(self.worker, "lead", lead.id, f"research:{status}", reason=error_code)

@@ -8,9 +8,16 @@ from __future__ import annotations
 
 import argparse
 
-from hunter.presentation.cli import admin_cmd, config_cmd, leads_cmd, research_cmd, sources_cmd
+from hunter.presentation.cli import (
+    admin_cmd,
+    config_cmd,
+    leads_cmd,
+    research_cmd,
+    scoring_cmd,
+    sources_cmd,
+)
 
-COMMAND_MODULES = (config_cmd, admin_cmd, leads_cmd, sources_cmd, research_cmd)
+COMMAND_MODULES = (config_cmd, admin_cmd, leads_cmd, sources_cmd, research_cmd, scoring_cmd)
 
 
 def build_parser() -> argparse.ArgumentParser:

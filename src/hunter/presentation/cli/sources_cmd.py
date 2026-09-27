@@ -9,9 +9,11 @@ from pathlib import Path
 from hunter.application import access, research_codec
 from hunter.application.case_claims import load_case_claims
 from hunter.application.errors import ErrorCode, HunterError
+from hunter.application.scoring import assess
 from hunter.application.sources import fetch_company_website
 from hunter.domain.roles import Permission
 from hunter.presentation.cli.common import resolve_lead_id, short
+from hunter.presentation.cli.scoring_cmd import print_score
 
 
 def register(subparsers: argparse._SubParsersAction) -> None:
@@ -40,8 +42,7 @@ def handle_card(app, args) -> int:
     company = store.company(lead.company_id)
     print(f"Лид {lead.id}  ·  стадия {lead.stage}  ·  ICP {lead.icp}  ·  продукт {lead.product}")
     print(f"Компания: {company['name'] or '—'}  ·  домен: {company['normalized_domain'] or '—'}")
-    score = "нет (research не проводился)" if lead.score_total is None else lead.score_total
-    print(f"Score (doc 04): {score}  ·  предварительный: {lead.prescore_total}")
+    print(f"Предварительный score (до AI, не doc 04): {lead.prescore_total}")
     prescore = store.lead_prescore(lead.id) or {}
     for name, reason in prescore.get("reasons", {}).items():
         print(f"    {name:<15} {prescore['components'][name]:>3}  {reason}")
@@ -58,6 +59,7 @@ def handle_card(app, args) -> int:
         kind = "общий канал" if c.company_wide else (c.role or "контакт")
         print(f"    {c.channel:<9} {c.normalized_address}  — {kind}")
     _print_research(store, lead.id)
+    print_score(assess(app.deps, lead.id))
     return 0
 
 
