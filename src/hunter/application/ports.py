@@ -11,11 +11,34 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
 
+from hunter.domain.cases import CaseClaim
 from hunter.domain.contacts import Channel
-from hunter.domain.entities import Contact, Evidence, Lead, Source
+from hunter.domain.entities import Contact, Evidence, FetchStatus, Lead, Source
 from hunter.domain.listings import Listing
 from hunter.domain.modes import RunMode
 from hunter.domain.users import User
+
+
+@dataclass(frozen=True, slots=True)
+class FetchResult:
+    """Normalized outcome of reading one URL; failures carry a safe error code."""
+
+    url: str
+    status: FetchStatus
+    text: str | None
+    content_hash: str | None
+    error_code: str | None = None
+    truncated: bool = False
+
+
+class SourceFetcher(Protocol):
+    def fetch(self, url: str) -> FetchResult:
+        """Read a public page; never raises for network or policy failures."""
+
+
+class KnowledgeBase(Protocol):
+    def documents(self, prefixes: tuple[str, ...]) -> dict[str, str]:
+        """Team documents by number prefix ('01', '03'); raises HunterError if one is missing."""
 
 
 class Clock(Protocol):
@@ -95,3 +118,12 @@ class Store(Protocol):
     ) -> None: ...
     def active_lead(self, company_id: str, campaign_id: str) -> Lead | None: ...
     def lead(self, lead_id: str) -> Lead | None: ...
+
+    # sources and case claims (H-04)
+    def company(self, company_id: str): ...
+    def source_by_url(self, source_type: str, url: str) -> Source | None: ...
+    def replace_source(self, source: Source, at: datetime) -> None: ...
+    def active_case_claim(self, case_key: str) -> CaseClaim | None: ...
+    def add_case_claim(self, claim: CaseClaim, at: datetime) -> None: ...
+    def case_claims(self, *, active_only: bool = True) -> list[CaseClaim]: ...
+    def case_claim(self, claim_id: str) -> CaseClaim | None: ...

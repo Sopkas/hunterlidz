@@ -265,6 +265,13 @@ class LeadsRepo:
         row = self.conn.execute("SELECT * FROM leads WHERE id = ?", (lead_id,)).fetchone()
         return _lead(row) if row else None
 
+    def lead_ids_with_prefix(self, prefix: str) -> list[str]:
+        rows = self.conn.execute(
+            "SELECT id FROM leads WHERE id LIKE ? ESCAPE '\\' LIMIT 2",
+            (prefix.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%",),
+        )
+        return [r["id"] for r in rows]
+
     def lead_prescore(self, lead_id: str) -> dict | None:
         row = self.conn.execute("SELECT prescore FROM leads WHERE id = ?", (lead_id,)).fetchone()
         return json.loads(row["prescore"]) if row and row["prescore"] else None

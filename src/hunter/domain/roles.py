@@ -30,6 +30,7 @@ class Permission(StrEnum):
     EXPORT = "export"
     MANAGE_USERS = "manage_users"
     SET_MODE = "set_mode"
+    MANAGE_CLAIMS = "manage_claims"
 
 
 _HUMAN_OPERATIONS = frozenset(

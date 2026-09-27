@@ -51,6 +51,7 @@ class Settings:
     db_path: Path
     business_tz: timezone
     default_currency: str = "RUB"
+    knowledge_dir: Path = Path("documents")
 
 
 def load_settings(environ: Mapping[str, str], dotenv_path: Path) -> Settings:
@@ -69,6 +70,7 @@ def load_settings(environ: Mapping[str, str], dotenv_path: Path) -> Settings:
         db_path=Path(env.get("HUNTER_DB", "hunter.db")),
         business_tz=parse_utc_offset(env.get("HUNTER_BUSINESS_UTC_OFFSET", "+03:00")),
         default_currency=currency,
+        knowledge_dir=Path(env.get("HUNTER_KNOWLEDGE_DIR", "documents")),
     )
 
 
