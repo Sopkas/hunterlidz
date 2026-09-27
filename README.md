@@ -16,7 +16,7 @@ python -m pip install --no-build-isolation --no-deps -e .
 cp .env.example .env                          # Windows: copy .env.example .env — и заполните
 ```
 
-На Windows без venv используйте `py` вместо `python`. В `.env` обязательно `HUNTER_ACTOR`; для AI — `HUNTER_LLM`, ключ провайдера, тариф (`0` для бесплатного Gemini), `COST_CURRENCY`, `RUN_COST_CAP`, `DAILY_COST_CAP`. Без них — код 2 до любых сетевых вызовов. Документы команды — в `documents/` (или путь в `HUNTER_KNOWLEDGE_DIR`).
+На Windows без venv используйте `py` вместо `python`. В `.env` обязательно `HUNTER_ACTOR`; для AI — `ANTHROPIC_API_KEY`, тариф модели за 1M токенов, `COST_CURRENCY`, `RUN_COST_CAP`, `DAILY_COST_CAP`. Без них — код 2 до любых сетевых вызовов. Документы команды — в `documents/` (или путь в `HUNTER_KNOWLEDGE_DIR`).
 
 ## Проверки (то же, что в CI)
 

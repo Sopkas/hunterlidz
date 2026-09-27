@@ -34,10 +34,6 @@ class App:
     def llm(self):
         """LLM client from settings; ConfigError (exit 2) before any network call."""
         cfg = llm_settings(self.settings.env)
-        if cfg.provider == "gemini":
-            from hunter.infrastructure.llm.gemini import GeminiClient
-
-            return GeminiClient(cfg.api_key, cfg.model)
         from hunter.infrastructure.llm.claude import ClaudeClient
 
         return ClaudeClient(cfg.api_key, cfg.model)

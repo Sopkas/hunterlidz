@@ -9,11 +9,7 @@ SRC = Path(__file__).resolve().parents[1] / "src"
 
 
 def run_hunter(*args: str, cwd: Path, extra_env: dict[str, str] | None = None):
-    env = {
-        k: v
-        for k, v in os.environ.items()
-        if not k.startswith(("HUNTER_", "GEMINI_", "ANTHROPIC_"))
-    }
+    env = {k: v for k, v in os.environ.items() if not k.startswith(("HUNTER_", "ANTHROPIC_"))}
     env["PYTHONPATH"] = str(SRC)
     env.update(extra_env or {})
     return subprocess.run(

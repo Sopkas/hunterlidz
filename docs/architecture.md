@@ -31,7 +31,7 @@ src/hunter/
 | --- | --- |
 | domain | `catalog` (ICP, продукты, стадии, приоритет, деньги), `listings`, `contacts`, `screening`, `prescore`, `entities`, `cases`, `research`, `budget`, `scoring`, `messages`, `drafts`, `replies`, `stages`, `followup`, `metrics`, `roles`, `modes`, `users` |
 | application | `access`, `import_listings`, `sources`, `case_claims`, `research`, `llm_calls`, `prompts`, `scoring`, `messaging`, `lead_stage`, `outreach`, `followups`, `reporting`, `ports` |
-| infrastructure | `sqlite/*` (миграции `0001`–`0007`, репозитории по таблицам, backup), `llm/gemini`, `llm/claude`, `fetcher`, `knowledge`, `listing_files`, `system` |
+| infrastructure | `sqlite/*` (миграции `0001`–`0007`, репозитории по таблицам, backup), `llm/claude`, `fetcher`, `knowledge`, `listing_files`, `system` |
 | presentation | `cli/*` — по модулю на группу команд |
 | runtime | `config`, `container`, `main` |
 

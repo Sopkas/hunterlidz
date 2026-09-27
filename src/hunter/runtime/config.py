@@ -86,17 +86,13 @@ def load_from_process(cwd: Path | None = None) -> Settings:
 
 @dataclass(frozen=True, slots=True)
 class LlmSettings:
-    provider: str  # gemini | claude
     api_key: str
     model: str
     pricing: Pricing
     limits: Limits
 
 
-_PROVIDERS = {
-    "gemini": ("GEMINI_API_KEY", "HUNTER_GEMINI_MODEL", "gemini-flash-lite-latest"),
-    "claude": ("ANTHROPIC_API_KEY", "HUNTER_CLAUDE_MODEL", "claude-haiku-4-5"),
-}
+DEFAULT_MODEL = "claude-haiku-4-5"
 
 
 def _decimal(env: Mapping[str, str], name: str, *, positive: bool) -> Decimal:
@@ -126,21 +122,17 @@ def _int(env: Mapping[str, str], name: str, default: int) -> int:
 
 
 def llm_settings(env: Mapping[str, str]) -> LlmSettings:
-    """Doc 12: provider, key, tariff and money caps are mandatory before any paid call.
-    A free tier is configured explicitly with prices 0; an unknown tariff is an error."""
-    provider = env.get("HUNTER_LLM", "").strip().lower()
-    if provider not in _PROVIDERS:
-        raise ConfigError("HUNTER_LLM: укажите gemini или claude")
-    key_name, model_name, default_model = _PROVIDERS[provider]
-    api_key = env.get(key_name, "").strip()
+    """Doc 12: key, tariff and money caps are mandatory before any paid call.
+    The model provider is Anthropic Claude; an unknown tariff is an error."""
+    api_key = env.get("ANTHROPIC_API_KEY", "").strip()
     if not api_key:
-        raise ConfigError(f"не задан {key_name} для HUNTER_LLM={provider}")
+        raise ConfigError("не задан ANTHROPIC_API_KEY")
     currency = env.get("COST_CURRENCY", "").strip().upper()
     if len(currency) != 3 or not currency.isalpha():
         raise ConfigError("COST_CURRENCY: укажите код валюты учёта, например USD")
     pricing = Pricing(
-        input_per_mtok=_decimal(env, "HUNTER_LLM_PRICE_INPUT_PER_MTOK", positive=False),
-        output_per_mtok=_decimal(env, "HUNTER_LLM_PRICE_OUTPUT_PER_MTOK", positive=False),
+        input_per_mtok=_decimal(env, "HUNTER_LLM_PRICE_INPUT_PER_MTOK", positive=True),
+        output_per_mtok=_decimal(env, "HUNTER_LLM_PRICE_OUTPUT_PER_MTOK", positive=True),
         currency=currency,
     )
     limits = Limits(
@@ -152,9 +144,8 @@ def llm_settings(env: Mapping[str, str]) -> LlmSettings:
         daily_cost_cap=_decimal(env, "DAILY_COST_CAP", positive=True),
     )
     return LlmSettings(
-        provider=provider,
         api_key=api_key,
-        model=env.get(model_name, "").strip() or default_model,
+        model=env.get("HUNTER_CLAUDE_MODEL", "").strip() or DEFAULT_MODEL,
         pricing=pricing,
         limits=limits,
     )

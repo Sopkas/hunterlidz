@@ -1,4 +1,3 @@
-import json
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
@@ -6,10 +5,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from hunter.application.ports import LlmError, LlmErrorKind
 from hunter.domain.budget import BudgetExceeded, Limits, Pricing, RunBudget
 from hunter.domain.research import SchemaError, parse_research
-from hunter.infrastructure.llm.gemini import parse_generate_content
 from hunter.runtime.config import ConfigError, llm_settings
 from tests.research_support import feature, payload
 
@@ -79,32 +76,6 @@ def test_no_facts_is_insufficient():
     assert parse(payload(LEAD, facts=[])).insufficient
 
 
-def load(name):
-    return json.loads((FIXTURES / name).read_text(encoding="utf-8"))
-
-
-def test_gemini_ok_counts_thinking_as_output():
-    response = parse_generate_content(load("gemini_ok.json"))
-    assert response.data == {"a": 1}
-    assert (response.input_tokens, response.output_tokens) == (1200, 350)
-
-
-def test_gemini_truncated_is_a_format_error():
-    response = parse_generate_content(load("gemini_max_tokens.json"))
-    assert response.data is None and "обрезан" in response.parse_error
-
-
-@pytest.mark.parametrize(
-    ("name", "kind"),
-    [("gemini_safety.json", LlmErrorKind.REFUSAL), ("gemini_empty.json", LlmErrorKind.UNAVAILABLE)],
-    ids=["safety", "empty"],
-)
-def test_gemini_failures_are_normalized(name, kind):
-    with pytest.raises(LlmError) as exc:
-        parse_generate_content(load(name))
-    assert exc.value.kind is kind
-
-
 def test_budget_reserves_worst_case_before_call():
     budget = RunBudget(
         Limits(max_llm_calls=2, run_cost_cap=Decimal("1"), daily_cost_cap=Decimal("1")),
@@ -129,10 +100,9 @@ def test_budget_stops_after_active_time():
 
 
 BASE_ENV = {
-    "HUNTER_LLM": "gemini",
-    "GEMINI_API_KEY": "k",
-    "HUNTER_LLM_PRICE_INPUT_PER_MTOK": "0",
-    "HUNTER_LLM_PRICE_OUTPUT_PER_MTOK": "0",
+    "ANTHROPIC_API_KEY": "k",
+    "HUNTER_LLM_PRICE_INPUT_PER_MTOK": "1",
+    "HUNTER_LLM_PRICE_OUTPUT_PER_MTOK": "5",
     "COST_CURRENCY": "usd",
     "RUN_COST_CAP": "0.5",
     "DAILY_COST_CAP": "5",
@@ -142,7 +112,7 @@ BASE_ENV = {
 def test_llm_settings_defaults():
     cfg = llm_settings(BASE_ENV)
     assert (cfg.model, cfg.pricing.currency, cfg.limits.max_llm_calls) == (
-        "gemini-flash-lite-latest",
+        "claude-haiku-4-5",
         "USD",
         3,
     )
@@ -151,8 +121,7 @@ def test_llm_settings_defaults():
 @pytest.mark.parametrize(
     "missing",
     [
-        "HUNTER_LLM",
-        "GEMINI_API_KEY",
+        "ANTHROPIC_API_KEY",
         "HUNTER_LLM_PRICE_INPUT_PER_MTOK",
         "COST_CURRENCY",
         "RUN_COST_CAP",
@@ -164,9 +133,10 @@ def test_llm_settings_required(missing):
         llm_settings(env)
 
 
-def test_zero_cost_cap_rejected():
+@pytest.mark.parametrize("name", ["DAILY_COST_CAP", "HUNTER_LLM_PRICE_OUTPUT_PER_MTOK"])
+def test_zero_cap_or_tariff_rejected(name):
     with pytest.raises(ConfigError):
-        llm_settings({**BASE_ENV, "DAILY_COST_CAP": "0"})
+        llm_settings({**BASE_ENV, name: "0"})
 
 
 def test_relevant_case_cites_registry_claim():

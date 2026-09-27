@@ -1,9 +1,11 @@
 """Anthropic Claude adapter through the official SDK. (H-05)
 
-Structured output via output_config.format (json_schema); the stable system part is marked
-for prompt caching. The SDK's own retries are disabled so that retries are counted by the
-research budget. The SDK is imported lazily: it is only needed when HUNTER_LLM=claude.
-Not verified against a live response in this project (the account had no credit balance).
+The only model provider of Hunter. Structured output via output_config.format (json_schema);
+the stable system part is marked for prompt caching. The SDK's own retries are disabled so
+that retries are counted by the research budget. The SDK module and client can be injected
+through the constructor for contract tests.
+ASSUMED RESPONSE SCHEMA: taken from the SDK documentation; not yet verified against a live
+response in this project (the account had no credit balance).
 """
 
 from __future__ import annotations
@@ -12,23 +14,31 @@ import json
 
 from hunter.application.ports import LlmError, LlmErrorKind, LlmResponse
 
-TIMEOUT_SECONDS = 45.0
+TIMEOUT_SECONDS = 45.0  # doc 08: one LLM call is limited to 45 s
 
 
 class ClaudeClient:
-    def __init__(self, api_key: str, model: str, timeout: float = TIMEOUT_SECONDS) -> None:
-        import anthropic
-
+    def __init__(
+        self,
+        api_key: str,
+        model: str,
+        timeout: float = TIMEOUT_SECONDS,
+        *,
+        sdk=None,
+        client=None,
+    ) -> None:
         if not api_key:
             raise ValueError("Anthropic API key is required")
+        if sdk is None:
+            import anthropic as sdk
         self.model = model
-        self._anthropic = anthropic
-        self._client = anthropic.Anthropic(api_key=api_key, timeout=timeout, max_retries=0)
+        self._sdk = sdk
+        self._client = client or sdk.Anthropic(api_key=api_key, timeout=timeout, max_retries=0)
 
     def complete_json(
         self, system: str, user: str, schema: dict, max_output_tokens: int
     ) -> LlmResponse:
-        sdk = self._anthropic
+        sdk = self._sdk
         try:
             response = self._client.messages.create(
                 model=self.model,
@@ -50,19 +60,19 @@ class ClaudeClient:
             raise LlmError(LlmErrorKind.UNAVAILABLE, f"http_{exc.status_code}") from None
         except sdk.APIConnectionError:
             raise LlmError(LlmErrorKind.UNAVAILABLE, "connection") from None
+        return parse_message(response)
 
-        usage = response.usage
-        input_tokens = (usage.input_tokens or 0) + (usage.cache_read_input_tokens or 0)
-        output_tokens = usage.output_tokens or 0
-        if response.stop_reason == "refusal":
-            raise LlmError(LlmErrorKind.REFUSAL)
-        text = "".join(b.text for b in response.content if b.type == "text")
-        try:
-            return LlmResponse(json.loads(text), input_tokens, output_tokens)
-        except json.JSONDecodeError:
-            reason = (
-                "ответ обрезан по лимиту токенов"
-                if response.stop_reason == "max_tokens"
-                else "не JSON"
-            )
-            return LlmResponse(None, input_tokens, output_tokens, parse_error=reason)
+
+def parse_message(response) -> LlmResponse:
+    usage = response.usage
+    input_tokens = (usage.input_tokens or 0) + (usage.cache_read_input_tokens or 0)
+    output_tokens = usage.output_tokens or 0
+    if response.stop_reason == "refusal":
+        raise LlmError(LlmErrorKind.REFUSAL)
+    text = "".join(b.text for b in response.content if b.type == "text")
+    try:
+        return LlmResponse(json.loads(text), input_tokens, output_tokens)
+    except json.JSONDecodeError:
+        truncated = response.stop_reason == "max_tokens"
+        reason = "ответ обрезан по лимиту токенов" if truncated else "не JSON"
+        return LlmResponse(None, input_tokens, output_tokens, parse_error=reason)
