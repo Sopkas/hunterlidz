@@ -1,0 +1,3 @@
+# Runtime dependencies, pinned. New ones go through the zone A coordinator.
+# Gemini is called through the standard library; the Anthropic SDK is only needed for HUNTER_LLM=claude.
+anthropic==1.8.0
