@@ -27,7 +27,7 @@ from hunter.domain.research import (
     ContactLevel,
 )
 
-PROMPT_VERSION = "1.0"
+PROMPT_VERSION = "1.1"  # 1.1: recipient name rule and no reference ids in the body
 RESEARCH_DOCUMENTS = ("01", "02", "03")  # cases, products, ICP and research rules
 
 EXECUTOR_INSTRUCTION = """\
@@ -239,6 +239,86 @@ def build_research_user(
         f"{json.dumps(items, ensure_ascii=False, indent=1)}\n"
         "</untrusted_evidence>\n\n"
         f"Уже известные пропуски: {json.dumps(list(missing_known), ensure_ascii=False)}"
+    )
+
+
+DRAFT_DOCUMENTS = ("01", "02", "05")  # cases, products, outbound rules and templates
+
+PERSONALIZATION_TASK = """\
+Подготовь одно первое сообщение для {contact_role} компании {company_name}.
+Язык: русский. Канал: {channel}. Ограничение: до {limit} символов.
+
+Факты для персонализации: {approved_facts}
+Гипотеза проблемы: {problem_hypothesis}
+Оффер: {offer}
+Разрешённое доказательство: {allowed_case_claim}
+
+Структура: контекст → наблюдение → релевантность → опыт → один CTA.
+Гипотезу формулируй вопросом. Не обещай цену, срок или бизнес-эффект,
+если они не переданы как допустимые условия конкретного предложения.
+Не используй выдуманную фамильярность и не утверждай знакомство.
+Если нужен отсутствующий факт, верни needs_review=true без готового текста.
+Имя адресата: {contact_name}. Неизвестное имя — не отсутствующий факт:
+обращайся нейтрально («Здравствуйте»), без выдуманного имени.
+Идентификаторы фактов, кейсов и документов (F1, auto_crm:v1, *.md) в текст
+не вставляй — перечисли их только в evidence_ids и case_claim_ids.
+
+Верни {schema_version}: body, evidence_ids, case_claim_ids, needs_review,
+review_reasons. Не отправляй сообщение."""
+
+
+def draft_schema() -> dict:
+    strings = {"type": "array", "items": {"type": "string"}}
+    return {
+        "type": "object",
+        "additionalProperties": False,
+        "required": [
+            "schema_version",
+            "body",
+            "evidence_ids",
+            "case_claim_ids",
+            "needs_review",
+            "review_reasons",
+        ],
+        "properties": {
+            "schema_version": {"type": "string", "enum": ["draft_v1"]},
+            "body": {"type": "string"},
+            "evidence_ids": strings,
+            "case_claim_ids": strings,
+            "needs_review": {"type": "boolean"},
+            "review_reasons": strings,
+        },
+    }
+
+
+def build_draft_user(
+    *,
+    contact_role: str,
+    contact_name: str | None,
+    company_name: str,
+    channel: str,
+    limit: int,
+    facts: Sequence[tuple[str, str]],
+    problem_hypothesis: str,
+    offer: str,
+    claims: Sequence[CaseClaim],
+) -> str:
+    """facts: (alias, text) pairs; the text is research output, not raw source text."""
+    fact_lines = "; ".join(f"[{alias}] {text}" for alias, text in facts) or "нет"
+    claim_lines = (
+        "; ".join(f"[{c.id}] {c.claim_text}" for c in claims) or "нет — кейсы не упоминать"
+    )
+    return PERSONALIZATION_TASK.format(
+        contact_role=contact_role,
+        contact_name=contact_name or "неизвестно",
+        company_name=company_name,
+        channel=channel,
+        limit=limit,
+        approved_facts=fact_lines,
+        problem_hypothesis=problem_hypothesis or "нет",
+        offer=offer or "нет",
+        allowed_case_claim=claim_lines,
+        schema_version="draft_v1",
     )
 
 

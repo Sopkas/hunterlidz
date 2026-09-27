@@ -22,27 +22,26 @@ from hunter.application import research_codec
 from hunter.application.access import ensure_worker, require, require_mode
 from hunter.application.context import Deps
 from hunter.application.errors import ErrorCode, HunterError
-from hunter.application.ports import Job, KnowledgeBase, LlmClient, LlmError
+from hunter.application.llm_calls import structured_call
+from hunter.application.ports import Job, KnowledgeBase, LlmClient
 from hunter.application.prompts import (
     PROMPT_VERSION,
     RESEARCH_DOCUMENTS,
     build_research_user,
     build_system,
-    correction_note,
     evidence_aliases,
     research_schema,
 )
 from hunter.application.scoring import apply_score
-from hunter.domain.budget import BudgetExceeded, Limits, Pricing, RunBudget, estimate_tokens
+from hunter.domain.budget import Limits, Pricing, RunBudget
 from hunter.domain.catalog import Icp, Stage
 from hunter.domain.modes import Operation
-from hunter.domain.research import SCHEMA_VERSION, Research, SchemaError, parse_research
+from hunter.domain.research import SCHEMA_VERSION, Research, parse_research
 from hunter.domain.roles import Permission
 from hunter.domain.users import User
 
 JOB_KIND = "research"
 LEASE = timedelta(minutes=5)  # longer than one run (120 s of active work) and renewed per call
-RETRY_DELAYS = (2.0, 5.0)  # seconds before the 2nd and 3rd attempt of a temporary failure
 ICP_VERSION = "1.0"
 
 
@@ -161,53 +160,37 @@ class _Pipeline:
         )
         aliases = evidence_aliases(evidence)
         started = self.monotonic()
-        note, corrected, failures = "", False, 0
-        while True:
-            prompt = user + note
-            try:
-                output_cap = budget.reserve_llm_call(
-                    estimate_tokens(self.system + prompt), self.monotonic() - started
-                )
-            except BudgetExceeded as exc:
-                return self._finish(job, token, run_id, lead, budget, "budget_exceeded", exc.reason)
-            if not self._heartbeat(job, token, budget):
-                return RunOutcome(lead_id, "lease_lost", "lease_lost")
-            try:
-                response = self.llm.complete_json(
-                    self.system, prompt, research_schema(), output_cap
-                )
-            except LlmError as exc:
-                budget.record(0, 0)  # a failed attempt still counts as a call
-                if exc.retryable and failures < len(RETRY_DELAYS):
-                    self.sleep(RETRY_DELAYS[failures])
-                    failures += 1
-                    continue
-                return self._finish(job, token, run_id, lead, budget, "failed", exc.kind.value)
-            budget.record(response.input_tokens, response.output_tokens)
-            try:
-                if response.data is None:
-                    raise SchemaError(response.parse_error or "не JSON")
-                research = parse_research(
-                    response.data,
-                    lead_id=lead.id,
-                    company_id=lead.company_id,
-                    evidence_aliases=aliases,
-                    allowed_claim_ids=self.allowed_claims,
-                    today=self._today(),
-                )
-            except SchemaError as exc:
-                if corrected:
-                    return self._finish(
-                        job, token, run_id, lead, budget, "failed", "invalid_schema"
-                    )
-                note, corrected = correction_note(str(exc)), True
-                continue
-            status = (
-                "insufficient_evidence"
-                if research.insufficient
-                else ("needs_review" if research.needs_review else "completed")
+        outcome = structured_call(
+            self.llm,
+            system=self.system,
+            user=user,
+            schema=research_schema(),
+            budget=budget,
+            validate=lambda data: parse_research(
+                data,
+                lead_id=lead.id,
+                company_id=lead.company_id,
+                evidence_aliases=aliases,
+                allowed_claim_ids=self.allowed_claims,
+                today=self._today(),
+            ),
+            sleep=self.sleep,
+            elapsed=lambda: self.monotonic() - started,
+            before_call=lambda: self._heartbeat(job, token, budget),
+        )
+        if outcome.status == "aborted":
+            return RunOutcome(lead_id, "lease_lost", "lease_lost")
+        if outcome.status != "ok":
+            return self._finish(
+                job, token, run_id, lead, budget, outcome.status, outcome.error_code
             )
-            return self._finish(job, token, run_id, lead, budget, status, None, research)
+        research = outcome.value
+        status = (
+            "insufficient_evidence"
+            if research.insufficient
+            else ("needs_review" if research.needs_review else "completed")
+        )
+        return self._finish(job, token, run_id, lead, budget, status, None, research)
 
     def _finish(
         self,
@@ -265,6 +248,11 @@ class _Pipeline:
         return self.deps.clock.now().astimezone(self.config.business_tz).date()
 
     def _spent_today(self):
-        local = self.deps.clock.now().astimezone(self.config.business_tz)
-        day_start = datetime.combine(local.date(), datetime.min.time(), self.config.business_tz)
-        return self.deps.store.cost_since(day_start, self.config.pricing.currency)
+        return spent_today(self.deps, self.config)
+
+
+def spent_today(deps: Deps, config: ResearchConfig):
+    """Model spend since the start of the business day, research and drafts together."""
+    local = deps.clock.now().astimezone(config.business_tz)
+    day_start = datetime.combine(local.date(), datetime.min.time(), config.business_tz)
+    return deps.store.cost_since(day_start, config.pricing.currency)

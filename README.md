@@ -43,7 +43,12 @@ python -m hunter research --limit 20                 # AI-исследовани
 python -m hunter queue                               # лиды, готовые к сообщению (score ≥ 80 и проверки)
 python -m hunter score <ID>                          # пересчитать score по последнему research
 python -m hunter allow-contact <ID> --reason "…"     # исключение оператора для WARM
+python -m hunter draft                               # черновики для очереди (или draft <ID>)
+python -m hunter review                              # a Approve · e Edit · s Skip · c карточка · n позже · q выход
+python -m hunter message show|approve|edit|skip <ID> --version N
 ```
+
+Approve — это согласование точной версии текста и адресата на 24 часа, а не отправка. Отправляет оператор вручную.
 
 Для `research` в `.env` нужны `HUNTER_LLM`, ключ провайдера, тариф (`0` для бесплатного Gemini), `COST_CURRENCY`, `RUN_COST_CAP`, `DAILY_COST_CAP` — см. `.env.example`. Без них — код 2 до любых сетевых вызовов.
 

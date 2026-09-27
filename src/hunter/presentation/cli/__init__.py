@@ -13,11 +13,20 @@ from hunter.presentation.cli import (
     config_cmd,
     leads_cmd,
     research_cmd,
+    review_cmd,
     scoring_cmd,
     sources_cmd,
 )
 
-COMMAND_MODULES = (config_cmd, admin_cmd, leads_cmd, sources_cmd, research_cmd, scoring_cmd)
+COMMAND_MODULES = (
+    config_cmd,
+    admin_cmd,
+    leads_cmd,
+    sources_cmd,
+    research_cmd,
+    scoring_cmd,
+    review_cmd,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:

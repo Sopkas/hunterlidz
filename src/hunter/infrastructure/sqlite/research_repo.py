@@ -178,10 +178,43 @@ class ResearchRepo:
 
     def cost_since(self, since: datetime, currency: str) -> Decimal:
         rows = self.conn.execute(
-            "SELECT cost FROM research_runs WHERE started_at >= ? AND currency = ?",
-            (to_db(since), currency),
+            "SELECT cost FROM research_runs WHERE started_at >= ? AND currency = ? "
+            "UNION ALL SELECT cost FROM llm_usage WHERE at >= ? AND currency = ?",
+            (to_db(since), currency, to_db(since), currency),
         )
         return sum((Decimal(r["cost"]) for r in rows), Decimal(0))
+
+    def add_usage(
+        self,
+        usage_id: str,
+        *,
+        purpose: str,
+        lead_id: str | None,
+        model_id: str,
+        status: str,
+        llm_calls: int,
+        input_tokens: int,
+        output_tokens: int,
+        cost: Decimal,
+        currency: str,
+        at: datetime,
+    ) -> None:
+        self.conn.execute(
+            "INSERT INTO llm_usage VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                usage_id,
+                purpose,
+                lead_id,
+                model_id,
+                status,
+                llm_calls,
+                input_tokens,
+                output_tokens,
+                str(cost),
+                currency,
+                to_db(at),
+            ),
+        )
 
     def update_lead_research(
         self, lead_id: str, *, icp: str, product: str | None, needs_review: bool, at: datetime
