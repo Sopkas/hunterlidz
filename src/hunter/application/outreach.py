@@ -23,6 +23,7 @@ from datetime import datetime, timedelta
 from hunter.application.access import require, require_mode
 from hunter.application.context import Deps
 from hunter.application.errors import ErrorCode, HunterError
+from hunter.application.followups import after_follow_up_sent
 from hunter.application.lead_stage import move_lead
 from hunter.application.llm_calls import structured_call
 from hunter.application.messaging import current_version
@@ -130,6 +131,8 @@ def manual_send(
                 created += store.add_task(
                     deps.ids.new_id(), lead.id, "follow_up", step, due_at, now
                 )
+        elif message.kind is MessageKind.FOLLOW_UP:
+            after_follow_up_sent(deps, actor, lead.id, message.sequence_step)
         deps.audit(
             actor,
             "message",

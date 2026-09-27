@@ -58,6 +58,9 @@ python -m hunter reply <LEAD> --file ответ.txt --received-at 2026-09-28T09:
 python -m hunter replies                                                 # ответы на разбор
 python -m hunter reply-review <ID> --class later --action nurture --return-at 2026-11-02T10:00+03:00
 python -m hunter suppress --lead <LEAD> --reason "просили не писать"
+python -m hunter tick                      # планировщик: раз в минуту через cron / планировщик Windows
+python -m hunter followup <TASK>           # черновик D4 / D9 / D25 по наступившей задаче
+python -m hunter task <TASK> --outcome relevant|not_relevant|later|done
 ```
 
 Для `research` в `.env` нужны `HUNTER_LLM`, ключ провайдера, тариф (`0` для бесплатного Gemini), `COST_CURRENCY`, `RUN_COST_CAP`, `DAILY_COST_CAP` — см. `.env.example`. Без них — код 2 до любых сетевых вызовов.

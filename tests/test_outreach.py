@@ -38,8 +38,8 @@ def reply_answer(cls="question", action="answer_question", return_date="", **ext
     return data
 
 
-@pytest.fixture
-def world():
+def build_world():
+    """Imported, researched lead with an approved first message, manual mode on."""
     clock = FixedClock()
     deps = make_deps(clock=clock)
     admin = add_user(deps, "boss", Role.ADMIN)
@@ -64,6 +64,11 @@ def world():
     approval = messaging.approve(deps, operator, draft.message_id, 1)
     set_mode(deps, admin, RunMode.MANUAL, "pilot")
     return deps, clock, admin, operator, lead, draft.message_id, approval
+
+
+@pytest.fixture
+def world():
+    return build_world()
 
 
 def send(deps, operator, message_id, approval, *, key="k-1", sent_at=None):

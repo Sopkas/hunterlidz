@@ -86,7 +86,7 @@ def create_initial_draft(
         blockers = "; ".join(view.eligibility.blockers) if view.eligibility else "нет research"
         return DraftResult(None, "not_eligible", blockers)
     lead, research = view.lead, view.research
-    contact = _pick_contact(store.contacts_for(lead.company_id))
+    contact = pick_contact(store.contacts_for(lead.company_id))
     company = store.company(lead.company_id)
 
     claims = [
@@ -112,6 +112,43 @@ def create_initial_draft(
         offer=research.what_we_sell or "",
         claims=claims,
     )
+    return generate_message(
+        deps,
+        actor,
+        lead_id,
+        kind=MessageKind.INITIAL,
+        step=0,
+        system=system,
+        user=user,
+        fact_aliases=fact_aliases,
+        claims=claims,
+        contact=contact,
+        llm=llm,
+        config=config,
+        sleep=sleep,
+        monotonic=monotonic,
+    )
+
+
+def generate_message(
+    deps: Deps,
+    actor: User,
+    lead_id: str,
+    *,
+    kind: MessageKind,
+    step: int,
+    system: str,
+    user: str,
+    fact_aliases: dict[str, str],
+    claims: list,
+    contact: Contact,
+    llm: LlmClient,
+    config: ResearchConfig,
+    sleep: Callable[[float], None],
+    monotonic: Callable[[], float],
+) -> DraftResult:
+    """One draft_v1 call under the budget, spend recorded, message v1 stored for review."""
+    store = deps.store
     budget = RunBudget(config.limits, config.pricing, spent_today=spent_today(deps, config))
     started = monotonic()
     outcome = structured_call(
@@ -140,7 +177,7 @@ def create_initial_draft(
     with store.transaction():
         store.add_usage(
             deps.ids.new_id(),
-            purpose="draft",
+            purpose="draft" if kind is MessageKind.INITIAL else f"draft_{kind}",
             lead_id=lead_id,
             model_id=llm.model,
             status=outcome.status,
@@ -154,14 +191,14 @@ def create_initial_draft(
     if outcome.status != "ok":
         return DraftResult(None, outcome.status, outcome.error_code)
     draft = outcome.value
-    blockers = body_blockers(draft.body, MessageKind.INITIAL)
+    blockers = body_blockers(draft.body, kind)
     status = MessageStatus.PENDING_REVIEW if draft.body else MessageStatus.DRAFT
     message_id = deps.ids.new_id()
     with store.transaction():
-        if store.active_message(lead_id, MessageKind.INITIAL, 0) is not None:
+        if store.active_message(lead_id, kind, step) is not None:
             raise HunterError(ErrorCode.VERSION_CONFLICT, "черновик уже создан параллельно")
         now = deps.clock.now()
-        store.add_message(Message(message_id, lead_id, MessageKind.INITIAL, 0, status, 1), now)
+        store.add_message(Message(message_id, lead_id, kind, step, status, 1), now)
         store.add_version(
             _version(
                 message_id,
@@ -178,7 +215,7 @@ def create_initial_draft(
             generation,
         )
         deps.audit(actor, "message", message_id, f"draft:{status}", new_version=1)
-        deps.audit(actor, "lead", lead_id, "draft_created", reason=message_id)
+        deps.audit(actor, "lead", lead_id, f"draft_created:{kind}:{step}", reason=message_id)
     return DraftResult(message_id, "created")
 
 
@@ -350,7 +387,7 @@ def _set_state(deps, message: Message, status: MessageStatus, new_version: int, 
         raise HunterError(ErrorCode.VERSION_CONFLICT, "сообщение изменено параллельно")
 
 
-def _pick_contact(contacts: list[Contact]) -> Contact:
+def pick_contact(contacts: list[Contact]) -> Contact:
     personal = [c for c in contacts if not c.company_wide and c.verified_at]
     shared = [c for c in contacts if c.verified_at]
     if not (personal or shared):

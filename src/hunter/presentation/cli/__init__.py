@@ -11,6 +11,7 @@ import argparse
 from hunter.presentation.cli import (
     admin_cmd,
     config_cmd,
+    followup_cmd,
     leads_cmd,
     outreach_cmd,
     research_cmd,
@@ -28,6 +29,7 @@ COMMAND_MODULES = (
     scoring_cmd,
     review_cmd,
     outreach_cmd,
+    followup_cmd,
 )
 
 

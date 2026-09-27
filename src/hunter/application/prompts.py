@@ -322,6 +322,61 @@ def build_draft_user(
     )
 
 
+FOLLOW_UP_GOALS = {
+    1: ("D4", "добавить контекст: предложить начать с одного процесса, без перестройки всего"),
+    2: ("D9", "другой аргумент: предложить короткий пример по разрешённому кейсу"),
+    3: ("D25", "завершить цепочку: вежливо остановить сообщения и оставить возможность вернуться"),
+}
+
+FOLLOW_UP_TASK = """\
+Подготовь повторное касание {day} (шаг {step}) для {contact_role} компании {company_name}.
+Язык: русский. Канал: {channel}. Ограничение: до {limit} символов.
+Цель касания: {goal}.
+Ответа на предыдущие сообщения нет (по данным CRM на {today}).
+
+Предыдущие сообщения: {previous}
+Факты для персонализации: {approved_facts}
+Разрешённое доказательство: {allowed_case_claim}
+
+Одна-две фразы и один вопрос. Не повторяй первое сообщение, не дави,
+не обещай цену, срок или эффект. Имя адресата: {contact_name}; неизвестное
+имя — нейтральное обращение. Идентификаторы (F1, кейс:v1, *.md) в текст не вставляй.
+Если нужен отсутствующий факт, верни needs_review=true без готового текста.
+
+Верни draft_v1: body, evidence_ids, case_claim_ids, needs_review,
+review_reasons. Не отправляй сообщение."""
+
+
+def build_follow_up_user(
+    *,
+    step: int,
+    contact_role: str,
+    contact_name: str | None,
+    company_name: str,
+    channel: str,
+    limit: int,
+    today: date,
+    previous: Sequence[str],
+    facts: Sequence[tuple[str, str]],
+    claims: Sequence[CaseClaim],
+) -> str:
+    day, goal = FOLLOW_UP_GOALS[step]
+    return FOLLOW_UP_TASK.format(
+        day=day,
+        step=step,
+        contact_role=contact_role,
+        company_name=company_name,
+        channel=channel,
+        limit=limit,
+        goal=goal,
+        today=today.isoformat(),
+        previous=" | ".join(previous) or "нет",
+        approved_facts="; ".join(f"[{a}] {t}" for a, t in facts) or "нет",
+        allowed_case_claim="; ".join(f"[{c.id}] {c.claim_text}" for c in claims) or "нет",
+        contact_name=contact_name or "неизвестно",
+    )
+
+
 REPLY_DOCUMENTS = ("05",)  # reply handling table
 
 REPLY_TASK = """\
