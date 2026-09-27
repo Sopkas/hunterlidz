@@ -50,6 +50,7 @@ class Settings:
     actor: str
     db_path: Path
     business_tz: timezone
+    default_currency: str = "RUB"
 
 
 def load_settings(environ: Mapping[str, str], dotenv_path: Path) -> Settings:
@@ -60,10 +61,14 @@ def load_settings(environ: Mapping[str, str], dotenv_path: Path) -> Settings:
             "Не задан HUNTER_ACTOR — имя пользователя Hunter, от которого выполняются действия. "
             "Скопируйте .env.example в .env и заполните его."
         )
+    currency = env.get("HUNTER_DEFAULT_CURRENCY", "RUB").strip().upper()
+    if len(currency) != 3 or not currency.isalpha():
+        raise ConfigError(f"HUNTER_DEFAULT_CURRENCY: ожидается код ISO 4217, получено {currency!r}")
     return Settings(
         actor=actor,
         db_path=Path(env.get("HUNTER_DB", "hunter.db")),
         business_tz=parse_utc_offset(env.get("HUNTER_BUSINESS_UTC_OFFSET", "+03:00")),
+        default_currency=currency,
     )
 
 

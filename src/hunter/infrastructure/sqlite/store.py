@@ -9,9 +9,10 @@ from pathlib import Path
 
 from hunter.infrastructure.sqlite.core_repo import CoreRepo
 from hunter.infrastructure.sqlite.db import Transactions, connect, migrate
+from hunter.infrastructure.sqlite.leads_repo import LeadsRepo
 
 
-class SqliteStore(CoreRepo):
+class SqliteStore(CoreRepo, LeadsRepo):
     def __init__(self, path: Path | str) -> None:
         self.conn = connect(path)
         self.applied_migrations = migrate(self.conn)

@@ -6,7 +6,7 @@ Backlog и критерии — из `13-tests-and-roadmap.md`. Каждая з�
 | --- | --- | --- | --- | --- |
 | H-01 | Каркас, конфигурация, роли, CI | A | `claude/H-01-project-foundation` | готово к ревью |
 | H-02 | База, миграции, аудит, пользователи, режимы | A | `claude/H-02-storage-audit` | готово к ревью |
-| H-03 | Импорт, нормализация, дедупликация, отсев | B | `claude/H-03-import-dedup` | план |
+| H-03 | Импорт, нормализация, дедупликация, отсев | B | `claude/H-03-import-dedup` | готово к ревью |
 | H-04 | Чтение источников, evidence, база знаний | B | `claude/H-04-sources-evidence` | план |
 | H-05 | LLM-адаптеры, бюджеты, jobs, research_v1 | B | `claude/H-05-llm-research` | план |
 | H-06 | Scoring и eligibility | B | `claude/H-06-scoring-eligibility` | план |

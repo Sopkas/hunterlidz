@@ -34,6 +34,10 @@ python -m hunter init                                # база + первый �
 python -m hunter users add anna operator             # admin добавляет оператора
 python -m hunter mode manual --reason "старт пилота" # admin меняет режим (shadow по умолчанию)
 python -m hunter history <ID>                        # аудит объекта
+python -m hunter import data/sample_listings.json --campaign pilot-1 --platform fl-demo
+python -m hunter leads --limit 20                    # очередь лидов
 ```
+
+`data/sample_listings.json` — синтетические объявления для проверки (контакты вымышленные).
 
 Без `HUNTER_ACTOR` программа завершается с кодом 2 и понятным сообщением.

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 
 from hunter.application import access
 from hunter.application.context import Deps
@@ -21,6 +22,10 @@ class App:
     def actor(self) -> User:
         """Authenticated user from HUNTER_ACTOR; raises UNAUTHENTICATED if unknown."""
         return access.authenticate(self.deps, self.settings.actor)
+
+    def business_today(self) -> date:
+        """Calendar date in the business time zone (not the UTC date)."""
+        return self.deps.clock.now().astimezone(self.settings.business_tz).date()
 
 
 def build_app(settings: Settings) -> App:
