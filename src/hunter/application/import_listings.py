@@ -115,7 +115,9 @@ def _import_row(
     if known is not None:
         return "matched", None, known or None  # '' marks a listing that was rejected before
 
-    reason = screen(listing, today)
+    address = classify_address(listing.contact_address) if listing.contact_address else None
+    banned = store.suppressed_match(listing.website_host, address.normalized if address else None)
+    reason = screen(listing, today, suppressed=banned)
     if reason is None and store.listing_text_exists(listing.text_hash):
         reason = RejectReason.DUPLICATE_TEXT
     raw_json = json.dumps(dict(raw), ensure_ascii=False, default=str)

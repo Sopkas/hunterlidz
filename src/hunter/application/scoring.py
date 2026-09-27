@@ -143,9 +143,7 @@ def _score(deps: Deps, lead: Lead, research: Research, today: date) -> Score:
 
 
 def _suppressed(deps: Deps, lead: Lead) -> bool:
-    # Contact bans arrive with H-09; until then nothing is suppressed.
-    checker = getattr(deps.store, "company_suppressed", None)
-    return bool(checker and checker(lead.company_id))
+    return deps.store.company_suppressed(lead.company_id)
 
 
 def _lead(deps: Deps, lead_id: str) -> Lead:

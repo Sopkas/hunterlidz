@@ -110,6 +110,30 @@ class RunRecord:
     finished_at: str | None
 
 
+@dataclass(frozen=True, slots=True)
+class TaskRow:
+    id: str
+    lead_id: str
+    type: str
+    sequence_step: int
+    due_at: datetime
+    status: str
+    note: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class InboundRow:
+    id: str
+    lead_id: str
+    contact_id: str | None
+    body: str
+    received_at: datetime
+    proposal: dict | None
+    reply_class: str | None
+    action: str | None
+    version: int
+
+
 class Clock(Protocol):
     def now(self) -> datetime:
         """Current moment, timezone-aware UTC."""

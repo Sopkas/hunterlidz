@@ -50,6 +50,16 @@ python -m hunter message show|approve|edit|skip <ID> --version N
 
 Approve — это согласование точной версии текста и адресата на 24 часа, а не отправка. Отправляет оператор вручную.
 
+```bash
+python -m hunter mode manual --reason "старт пилота"                   # admin: разрешить регистрацию отправок
+python -m hunter sent <MSG> --version N --sent-at 2026-09-27T12:30+03:00  # после реальной отправки
+python -m hunter tasks --due                                             # наступившие follow-up и возвраты
+python -m hunter reply <LEAD> --file ответ.txt --received-at 2026-09-28T09:10+03:00
+python -m hunter replies                                                 # ответы на разбор
+python -m hunter reply-review <ID> --class later --action nurture --return-at 2026-11-02T10:00+03:00
+python -m hunter suppress --lead <LEAD> --reason "просили не писать"
+```
+
 Для `research` в `.env` нужны `HUNTER_LLM`, ключ провайдера, тариф (`0` для бесплатного Gemini), `COST_CURRENCY`, `RUN_COST_CAP`, `DAILY_COST_CAP` — см. `.env.example`. Без них — код 2 до любых сетевых вызовов.
 
 `data/sample_listings.json` — синтетические объявления для проверки (контакты вымышленные).

@@ -21,6 +21,7 @@ from datetime import date
 from hunter.application.access import require, require_mode
 from hunter.application.context import Deps
 from hunter.application.errors import ErrorCode, HunterError
+from hunter.application.lead_stage import move_lead
 from hunter.application.llm_calls import structured_call
 from hunter.application.ports import KnowledgeBase, LlmClient
 from hunter.application.prompts import (
@@ -78,6 +79,8 @@ def create_initial_draft(
     existing = store.active_message(lead_id, MessageKind.INITIAL, 0)
     if existing is not None:
         return DraftResult(existing.id, "existing")
+    if store.unreviewed_inbound(lead_id):
+        return DraftResult(None, "not_eligible", "получен ответ — сначала разберите его")
     view = assess(deps, lead_id)
     if view.eligibility is None or not view.eligibility.eligible:
         blockers = "; ".join(view.eligibility.blockers) if view.eligibility else "нет research"
@@ -215,7 +218,13 @@ def approve(deps: Deps, actor: User, message_id: str, expected_version: int) -> 
         store.add_approval(approval)
         _set_state(deps, message, MessageStatus.APPROVED, version.version)
         if message.kind is MessageKind.INITIAL:
-            _move_lead(deps, actor, message.lead_id, {Stage.RESEARCHED: Stage.APPROVED})
+            move_lead(
+                deps,
+                actor,
+                message.lead_id,
+                Stage.APPROVED,
+                only_from=frozenset({Stage.RESEARCHED}),
+            )
         deps.audit(
             actor,
             "message",
@@ -269,7 +278,13 @@ def edit(
         revoked = store.revoke_approvals(message.id, now, f"edited to v{new_number}")
         _set_state(deps, message, MessageStatus.PENDING_REVIEW, new_number)
         if message.kind is MessageKind.INITIAL:
-            _move_lead(deps, actor, message.lead_id, {Stage.APPROVED: Stage.RESEARCHED})
+            move_lead(
+                deps,
+                actor,
+                message.lead_id,
+                Stage.RESEARCHED,
+                only_from=frozenset({Stage.APPROVED}),
+            )
         deps.audit(
             actor,
             "message",
@@ -335,23 +350,6 @@ def _set_state(deps, message: Message, status: MessageStatus, new_version: int, 
         raise HunterError(ErrorCode.VERSION_CONFLICT, "сообщение изменено параллельно")
 
 
-def _move_lead(deps: Deps, actor: User, lead_id: str, transitions: dict[Stage, Stage]) -> None:
-    lead = deps.store.lead(lead_id)
-    target = transitions.get(lead.stage)
-    if target is None:
-        return
-    if not deps.store.set_lead_stage(lead_id, target.value, lead.version, deps.clock.now()):
-        raise HunterError(ErrorCode.VERSION_CONFLICT, "карточка лида изменена параллельно")
-    deps.audit(
-        actor,
-        "lead",
-        lead_id,
-        f"stage:{lead.stage}->{target}",
-        previous_version=lead.version,
-        new_version=lead.version + 1,
-    )
-
-
 def _pick_contact(contacts: list[Contact]) -> Contact:
     personal = [c for c in contacts if not c.company_wide and c.verified_at]
     shared = [c for c in contacts if c.verified_at]
@@ -361,10 +359,13 @@ def _pick_contact(contacts: list[Contact]) -> Contact:
 
 
 def _check_contact_allowed(deps: Deps, lead_id: str, contact: Contact) -> None:
-    """Contact bans are enforced from H-09; the hook is here so approval checks them first."""
-    checker = getattr(deps.store, "contact_blocked", None)
-    if checker and checker(contact.company_id, contact.id):
+    """A contact ban is stronger than an approval; an unreviewed reply pauses the chain."""
+    if deps.store.contact_blocked(contact.company_id, contact.id):
         raise HunterError(ErrorCode.SUPPRESSED, "запрет контакта сильнее согласования")
+    if deps.store.unreviewed_inbound(lead_id):
+        raise HunterError(
+            ErrorCode.INVALID_TRANSITION, "получен ответ — цепочка на паузе до разбора"
+        )
 
 
 def _version(

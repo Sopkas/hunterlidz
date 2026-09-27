@@ -265,6 +265,13 @@ class LeadsRepo:
         row = self.conn.execute("SELECT * FROM leads WHERE id = ?", (lead_id,)).fetchone()
         return _lead(row) if row else None
 
+    def set_loss_reason(self, lead_id: str, reason: str) -> None:
+        self.conn.execute("UPDATE leads SET loss_reason = ? WHERE id = ?", (reason, lead_id))
+
+    def leads_of_company(self, company_id: str) -> list[Lead]:
+        rows = self.conn.execute("SELECT * FROM leads WHERE company_id = ?", (company_id,))
+        return [_lead(r) for r in rows]
+
     def lead_ids_with_prefix(self, prefix: str) -> list[str]:
         rows = self.conn.execute(
             "SELECT id FROM leads WHERE id LIKE ? ESCAPE '\\' LIMIT 2",
