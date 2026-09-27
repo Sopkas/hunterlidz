@@ -31,6 +31,7 @@ class Permission(StrEnum):
     MANAGE_USERS = "manage_users"
     SET_MODE = "set_mode"
     MANAGE_CLAIMS = "manage_claims"
+    BACKUP = "backup"
 
 
 _HUMAN_OPERATIONS = frozenset(

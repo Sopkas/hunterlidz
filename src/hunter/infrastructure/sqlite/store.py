@@ -12,13 +12,21 @@ from hunter.infrastructure.sqlite.db import Transactions, connect, migrate
 from hunter.infrastructure.sqlite.leads_repo import LeadsRepo
 from hunter.infrastructure.sqlite.messages_repo import MessagesRepo
 from hunter.infrastructure.sqlite.outreach_repo import OutreachRepo
+from hunter.infrastructure.sqlite.reporting_repo import ReportingRepo
 from hunter.infrastructure.sqlite.research_repo import ResearchRepo
 from hunter.infrastructure.sqlite.scores_repo import ScoresRepo
 from hunter.infrastructure.sqlite.sources_repo import SourcesRepo
 
 
 class SqliteStore(
-    CoreRepo, LeadsRepo, SourcesRepo, ResearchRepo, ScoresRepo, MessagesRepo, OutreachRepo
+    CoreRepo,
+    LeadsRepo,
+    SourcesRepo,
+    ResearchRepo,
+    ScoresRepo,
+    MessagesRepo,
+    OutreachRepo,
+    ReportingRepo,
 ):
     def __init__(self, path: Path | str) -> None:
         self.conn = connect(path)

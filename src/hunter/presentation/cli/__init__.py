@@ -14,6 +14,7 @@ from hunter.presentation.cli import (
     followup_cmd,
     leads_cmd,
     outreach_cmd,
+    reporting_cmd,
     research_cmd,
     review_cmd,
     scoring_cmd,
@@ -30,6 +31,7 @@ COMMAND_MODULES = (
     review_cmd,
     outreach_cmd,
     followup_cmd,
+    reporting_cmd,
 )
 
 

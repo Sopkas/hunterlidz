@@ -25,6 +25,16 @@ src/hunter/
 - **Неизвестно ≠ ноль.** Неизвестное — `None` и причина в списке пропусков.
 - **Версии — явно**: `RULES_VERSION`, `PRESCORE_VERSION`, `PROMPT_VERSION`, `schema_version` в payload.
 
+## Карта модулей
+
+| Слой | Модули |
+| --- | --- |
+| domain | `catalog` (ICP, продукты, стадии, приоритет, деньги), `listings`, `contacts`, `screening`, `prescore`, `entities`, `cases`, `research`, `budget`, `scoring`, `messages`, `drafts`, `replies`, `stages`, `followup`, `metrics`, `roles`, `modes`, `users` |
+| application | `access`, `import_listings`, `sources`, `case_claims`, `research`, `llm_calls`, `prompts`, `scoring`, `messaging`, `lead_stage`, `outreach`, `followups`, `reporting`, `ports` |
+| infrastructure | `sqlite/*` (миграции `0001`–`0007`, репозитории по таблицам, backup), `llm/gemini`, `llm/claude`, `fetcher`, `knowledge`, `listing_files`, `system` |
+| presentation | `cli/*` — по модулю на группу команд |
+| runtime | `config`, `container`, `main` |
+
 ## Режимы работы
 
 `shadow` (research и черновики, отправка отключена), `manual` (ручная отправка с подтверждением), `paused` (только чтение, ответы и запреты). `assisted_send` в v0 не реализован: `dispatch` возвращает `ADAPTER_DISABLED`. Режим переключает администратор, переключение записывается в аудит.

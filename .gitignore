@@ -9,6 +9,10 @@
 *.db-shm
 exports/
 backups/
+# Exports may contain lead contacts
+*.csv
+# Local leftovers of the removed single-file prototype
+/hunter/
 
 # Knowledge base (company documents) lives outside the repository, see HUNTER_KNOWLEDGE_DIR
 documents/

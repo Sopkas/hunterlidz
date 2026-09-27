@@ -14,7 +14,7 @@ Backlog и критерии — из `13-tests-and-roadmap.md`. Каждая з�
 | H-08 | Telegram-панель | A | — | не в этом стеке |
 | H-09 | Ручная отправка, ответы, suppression | A | `claude/H-09-send-replies-suppression` | готово к ревью |
 | H-10 | Follow-up, nurture, планировщик | A | `claude/H-10-followup-scheduler` | готово к ревью |
-| H-11 | Экспорт, метрики, backup / restore | A | `claude/H-11-export-metrics` | план |
+| H-11 | Экспорт, метрики, backup / restore | A | `claude/H-11-export-metrics` | готово к ревью |
 | H-12 | Shadow и ручной пилот | — | — | после H-11 |
 | H-13 | Адаптер отправки | — | — | после пилота |
 | H-14 | Регулярный discovery | — | — | после пилота |
