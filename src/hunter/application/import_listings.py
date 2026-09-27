@@ -37,7 +37,6 @@ from hunter.domain.screening import SCREENING_VERSION, RejectReason, screen
 from hunter.domain.users import User
 
 ICP_VERSION = "1.0"  # doc 03, three segments
-EVIDENCE_EXCERPT_LIMIT = 2_000
 AUTHOR_ROLE = "автор объявления"  # the person who published the need
 
 
@@ -210,7 +209,7 @@ def _evidence_for(deps: Deps, company_id: str, source_id: str, listing: Listing)
     posted = listing.posted_on
     items = [
         ("title", "Заголовок объявления", listing.title),
-        ("description", "Текст объявления", listing.body[:EVIDENCE_EXCERPT_LIMIT]),
+        ("description", "Текст объявления", listing.body),  # full text, <= 12 000
         ("company", "Заказчик указан в объявлении", listing.company_name),
         ("budget", "Бюджет, заявленный в объявлении", _money(listing)),
         ("posted_at", "Дата публикации объявления", posted.isoformat() if posted else None),

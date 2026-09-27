@@ -6,7 +6,7 @@ import argparse
 import json
 from pathlib import Path
 
-from hunter.application import access
+from hunter.application import access, research_codec
 from hunter.application.case_claims import load_case_claims
 from hunter.application.errors import ErrorCode, HunterError
 from hunter.application.sources import fetch_company_website
@@ -57,7 +57,36 @@ def handle_card(app, args) -> int:
     for c in store.contacts_for(lead.company_id):
         kind = "общий канал" if c.company_wide else (c.role or "контакт")
         print(f"    {c.channel:<9} {c.normalized_address}  — {kind}")
+    _print_research(store, lead.id)
     return 0
+
+
+def _print_research(store, lead_id: str) -> None:
+    run = store.latest_run(lead_id)
+    if run is None:
+        print("Research: не проводился.")
+        return
+    print(
+        f"Research: {run.status} · модель {run.model_id} · вызовов {run.llm_calls} · "
+        f"токены {run.input_tokens}/{run.output_tokens} · {run.cost} {run.currency}"
+        + (f" · ошибка {run.error_code}" if run.error_code else "")
+    )
+    if not run.result:
+        return
+    research = research_codec.loads(run.result)
+    print(f"  Суть: {research.summary}")
+    for fact in research.facts:
+        refs = ", ".join(i[:8] for i in fact.evidence_ids)
+        print(f"  • {fact.text}  [{refs}]")
+    print(f"  Гипотеза: {research.problem_hypothesis or '—'}")
+    print(f"  Вопрос: {research.validation_question or '—'}")
+    print(f"  Что продаём: {research.what_we_sell or '—'}")
+    print(f"  Почему: {research.why or '—'}")
+    print(f"  Кейсы: {', '.join(research.relevant_case_claim_ids) or '—'}")
+    if research.missing_data:
+        print(f"  Не хватает: {'; '.join(research.missing_data)}")
+    for problem in research.problems:
+        print(f"  ⚠ {problem}")
 
 
 def handle_fetch(app, args) -> int:

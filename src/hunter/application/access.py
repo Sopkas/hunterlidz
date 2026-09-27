@@ -47,6 +47,20 @@ def bootstrap_admin(deps: Deps, name: str) -> User | None:
         return user
 
 
+WORKER_NAME = "hunter-worker"
+
+
+def ensure_worker(deps: Deps) -> User:
+    """Service identity for background research; it can never approve or send."""
+    with deps.store.transaction():
+        worker = deps.store.user_by_name(WORKER_NAME)
+        if worker is None:
+            worker = User(id=deps.ids.new_id(), name=WORKER_NAME, role=Role.WORKER, active=True)
+            deps.store.add_user(worker, deps.clock.now())
+            deps.audit(worker, "user", worker.id, "create_service_worker", new_version=1)
+        return worker
+
+
 def add_user(deps: Deps, actor: User, name: str, role: Role) -> User:
     require(actor, Permission.MANAGE_USERS)
     with deps.store.transaction():

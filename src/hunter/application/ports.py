@@ -9,6 +9,8 @@ from collections.abc import Iterator
 from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from datetime import datetime
+from decimal import Decimal
+from enum import StrEnum
 from typing import Protocol
 
 from hunter.domain.cases import CaseClaim
@@ -39,6 +41,73 @@ class SourceFetcher(Protocol):
 class KnowledgeBase(Protocol):
     def documents(self, prefixes: tuple[str, ...]) -> dict[str, str]:
         """Team documents by number prefix ('01', '03'); raises HunterError if one is missing."""
+
+
+class LlmErrorKind(StrEnum):
+    TIMEOUT = "timeout"
+    QUOTA = "quota"
+    UNAVAILABLE = "unavailable"
+    REFUSAL = "refusal"
+    AUTH = "auth"
+    BAD_REQUEST = "bad_request"
+
+
+class LlmError(Exception):
+    """Normalized provider failure. The message never contains prompts, answers or keys."""
+
+    def __init__(self, kind: LlmErrorKind, detail: str = "") -> None:
+        super().__init__(f"{kind}: {detail}" if detail else kind.value)
+        self.kind = kind
+
+    @property
+    def retryable(self) -> bool:
+        return self.kind in (LlmErrorKind.TIMEOUT, LlmErrorKind.UNAVAILABLE)
+
+
+@dataclass(frozen=True, slots=True)
+class LlmResponse:
+    data: object | None  # parsed JSON, None when the text was not valid JSON
+    input_tokens: int
+    output_tokens: int
+    parse_error: str | None = None
+
+
+class LlmClient(Protocol):
+    model: str
+
+    def complete_json(
+        self, system: str, user: str, schema: dict, max_output_tokens: int
+    ) -> LlmResponse:
+        """One structured-output call; raises LlmError for provider failures."""
+
+
+@dataclass(frozen=True, slots=True)
+class Job:
+    id: str
+    kind: str
+    entity_id: str
+    attempt: int
+    lease_token: str | None
+    checkpoint: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class RunRecord:
+    id: str
+    lead_id: str
+    job_id: str
+    status: str
+    model_id: str
+    llm_calls: int
+    input_tokens: int
+    output_tokens: int
+    cost: Decimal
+    currency: str
+    error_code: str | None
+    result: str | None
+    problems: str | None
+    started_at: str
+    finished_at: str | None
 
 
 class Clock(Protocol):

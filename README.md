@@ -39,7 +39,10 @@ python -m hunter leads --limit 20                    # очередь лидов
 python -m hunter claims load data/case_claims.json   # admin: реестр кейсов (doc 01)
 python -m hunter lead <ID>                           # карточка: источники, evidence, контакты
 python -m hunter sources fetch <ID>                  # прочитать сайт компании (если есть домен)
+python -m hunter research --limit 20                 # AI-исследование лучших лидов
 ```
+
+Для `research` в `.env` нужны `HUNTER_LLM`, ключ провайдера, тариф (`0` для бесплатного Gemini), `COST_CURRENCY`, `RUN_COST_CAP`, `DAILY_COST_CAP` — см. `.env.example`. Без них — код 2 до любых сетевых вызовов.
 
 `data/sample_listings.json` — синтетические объявления для проверки (контакты вымышленные).
 
