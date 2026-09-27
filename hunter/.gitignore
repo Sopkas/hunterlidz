@@ -1,0 +1,4 @@
+.env
+hunter.db
+*.csv
+__pycache__/
