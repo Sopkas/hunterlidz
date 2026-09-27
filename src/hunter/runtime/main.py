@@ -21,9 +21,14 @@ EXIT_CONFIG = 2
 
 def _configure_stdio() -> None:
     # Windows consoles and PowerShell pipes: force UTF-8 and drop the BOM PowerShell prepends.
-    sys.stdout.reconfigure(encoding="utf-8")
-    sys.stderr.reconfigure(encoding="utf-8")
-    sys.stdin.reconfigure(encoding="utf-8-sig")
+    for stream, encoding in (
+        (sys.stdout, "utf-8"),
+        (sys.stderr, "utf-8"),
+        (sys.stdin, "utf-8-sig"),
+    ):
+        reconfigure = getattr(stream, "reconfigure", None)  # absent on test capture streams
+        if reconfigure:
+            reconfigure(encoding=encoding)
 
 
 def main(argv: Sequence[str] | None = None) -> int:

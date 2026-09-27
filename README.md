@@ -29,7 +29,11 @@ python -m ruff format --check src tests
 ## Запуск
 
 ```bash
-python -m hunter config        # проверить конфигурацию
+python -m hunter config                              # проверить конфигурацию
+python -m hunter init                                # база + первый администратор = HUNTER_ACTOR
+python -m hunter users add anna operator             # admin добавляет оператора
+python -m hunter mode manual --reason "старт пилота" # admin меняет режим (shadow по умолчанию)
+python -m hunter history <ID>                        # аудит объекта
 ```
 
 Без `HUNTER_ACTOR` программа завершается с кодом 2 и понятным сообщением.
