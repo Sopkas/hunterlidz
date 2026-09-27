@@ -36,6 +36,9 @@ python -m hunter mode manual --reason "старт пилота" # admin меня
 python -m hunter history <ID>                        # аудит объекта
 python -m hunter import data/sample_listings.json --campaign pilot-1 --platform fl-demo
 python -m hunter leads --limit 20                    # очередь лидов
+python -m hunter claims load data/case_claims.json   # admin: реестр кейсов (doc 01)
+python -m hunter lead <ID>                           # карточка: источники, evidence, контакты
+python -m hunter sources fetch <ID>                  # прочитать сайт компании (если есть домен)
 ```
 
 `data/sample_listings.json` — синтетические объявления для проверки (контакты вымышленные).
