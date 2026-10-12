@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: test (${{ matrix.os }}, ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: "3.12"
+          - os: ubuntu-latest
+            python: "3.14"
+          - os: windows-latest
+            python: "3.13"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install pinned dependencies
+        run: |
+          python -m pip install -r requirements-dev.txt
+          python -m pip install --no-build-isolation --no-deps -e .
+      - name: pip check
+        run: python -m pip check
+      - name: ruff check
+        run: python -m ruff check src tests
+      - name: ruff format --check
+        run: python -m ruff format --check src tests
+      - name: pytest (no keys, no network)
+        run: python -m pytest -q --durations=5
+      - name: smoke — no settings exits with code 2
+        shell: bash
+        run: |
+          set +e
+          python -m hunter config
+          code=$?
+          set -e
+          test "$code" -eq 2
