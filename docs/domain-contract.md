@@ -1,6 +1,6 @@
 # Контракт доменных типов (S1-05, КОНТРАКТ)
 
-Общие типы зон A и B. Код — `src/hunter/domain/catalog.py`, `entities.py`, `modes.py`; инварианты — `tests/test_domain_contract.py`. Источники: документ 04 (стадии, приоритет), документ 10 (сущности), документ 12 (режимы). Изменение этих типов — отдельным PR с пометкой КОНТРАКТ и Approve от обеих зон.
+Общие типы зон A и B. Код — `src/hunter/domain/catalog.py`, `entities.py`, `modes.py`; инварианты — `tests/test_domain_contract.py`. Источники: документ 04 (стадии, приоритет), документ 10 (сущности), документ 12 (режимы). Изменение этих типов — отдельным PR с пометкой КОНТРАКТ и Approve от обеих зон (пока в зонах по одному человеку, Approve за обе даёт тимлид — координатор зон).
 
 ## Общие правила
 
@@ -23,13 +23,13 @@
 | `Contact` | id, company_id, channel, normalized_address, version, name, role, source_id, verified_at | адрес не пустой и без пробелов по краям; канал — `Channel` |
 | `Lead` | id, company_id, campaign_id, stage, version, icp, product, priority, owner_id, next_action_at, loss_reason | `stage` — только `Stage`; `loss_reason` есть ровно у LOST; `active` — стадия не WON / LOST |
 
-## Отклонения от документа 10 и решения, которые нужно подтвердить зоне B
+## Отклонения от документа 10 и решения, которые нужно подтвердить на ревью
 
 | # | Что | Почему |
 | --- | --- | --- |
 | 1 | `Source.error_code` — нет в таблице `sources` | FR-03: недоступность источника должна быть явной; код ошибки хранится рядом со статусом |
 | 2 | `Evidence.event_at` — календарная `date`, а не момент RFC 3339 | Дата события известна с точностью до дня / месяца / года (`date_precision`); время суток не выдумываем |
-| 3 | Значения `VerificationStatus`: unverified / verified / rejected | В документе 10 есть поле, но нет значений — **предположение, нужно подтверждение зоны B** |
+| 3 | Значения `VerificationStatus`: unverified / verified / rejected | В документе 10 есть поле, но нет значений — **предположение, нужно подтверждение на ревью контракта** |
 | 4 | Значения `Channel`: email, telegram, phone, web, platform, other | В документе 10 нет перечня; `platform` — ответ через площадку объявлений (ADR-0001) |
 | 5 | Значения `SourceType`: website, listing, conversation, manual | В документе 10 нет перечня; `listing` используется, только если PM примет ADR-0001 |
 | 6 | `created_at`, `updated_at` не входят в доменные типы | Это метаданные хранения, их ведёт база (S1-07); `version` в типах есть — она нужна для `expected_version` |
