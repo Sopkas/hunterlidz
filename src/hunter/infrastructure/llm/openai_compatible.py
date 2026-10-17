@@ -45,12 +45,24 @@ class TransportUnavailable(Exception):
 Transport = Callable[[str, Mapping[str, str], bytes, float], HttpResponse]
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """urllib follows 301/302/303 for a POST as a GET to Location and copies every header,
+    Authorization included, to any host and scheme. An API call is never redirected, so a 3xx
+    stays an HTTP error and the key never leaves for another address (review A on #13)."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+_OPENER = urllib.request.build_opener(_NoRedirect)
+
+
 def urllib_transport(
     url: str, headers: Mapping[str, str], body: bytes, timeout: float
 ) -> HttpResponse:
     request = urllib.request.Request(url, data=body, headers=dict(headers), method="POST")
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
+        with _OPENER.open(request, timeout=timeout) as response:
             return HttpResponse(response.status, dict(response.headers), response.read())
     except urllib.error.HTTPError as error:
         return HttpResponse(error.code, dict(error.headers or {}), error.read() or b"")
@@ -197,7 +209,8 @@ class OpenAICompatibleClient:
                 request, _error_code(response.status), usage, _retry_after(response.headers)
             )
         if not isinstance(payload, Mapping):
-            return self._failure(request, LlmErrorCode.UNKNOWN, Usage(0, 0))
+            # A 200 that is not JSON is a gateway or proxy page: a temporary failure, retried.
+            return self._failure(request, LlmErrorCode.UNAVAILABLE, Usage(0, 0))
         usage = _usage(payload)
         error = payload.get("error")
         if isinstance(error, Mapping):
@@ -215,6 +228,10 @@ class OpenAICompatibleClient:
         if not isinstance(message, Mapping):
             return self._failure(request, LlmErrorCode.UNKNOWN, usage)
         finish = choice.get("finish_reason")
+        if finish == "error":
+            # OpenRouter: the upstream provider failed mid-answer; a fragment is never a result,
+            # even when it happens to be valid JSON (review A on #13).
+            return self._failure(request, LlmErrorCode.UNAVAILABLE, usage)
         if finish == "content_filter" or message.get("refusal"):
             return self._failure(request, LlmErrorCode.REFUSAL, usage)
         if finish == "length":

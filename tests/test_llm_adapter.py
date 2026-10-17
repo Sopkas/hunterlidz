@@ -205,15 +205,22 @@ def test_refusal_field_is_a_refusal():
     assert client(FakeTransport(response)).complete_json(REQUEST).error_code is LlmErrorCode.REFUSAL
 
 
+def test_gateway_page_with_200_is_a_temporary_failure():
+    response = HttpResponse(200, {}, b"<html>Bad gateway</html>")
+    result = client(FakeTransport(response)).complete_json(REQUEST)
+    assert result.error_code is LlmErrorCode.UNAVAILABLE and result.retryable
+
+
+def test_upstream_failure_mid_answer_is_not_a_result():
+    # Review A on #13: a fragment that happens to be valid JSON must not become a success.
+    result = client(FakeTransport(answer('{"ok": true}', finish="error"))).complete_json(REQUEST)
+    assert result.error_code is LlmErrorCode.UNAVAILABLE and result.data is None
+
+
 @pytest.mark.parametrize(
     "body",
-    [
-        b"<html>Bad gateway</html>",
-        b'{"id": "x"}',
-        b'{"choices": []}',
-        b'{"choices": [{"text": "x"}]}',
-    ],
-    ids=["html", "no-choices", "empty-choices", "legacy-shape"],
+    [b'{"id": "x"}', b'{"choices": []}', b'{"choices": [{"text": "x"}]}'],
+    ids=["no-choices", "empty-choices", "legacy-shape"],
 )
 def test_changed_answer_shape_is_unknown_error(body):
     result = client(FakeTransport(HttpResponse(200, {}, body))).complete_json(REQUEST)
@@ -254,6 +261,11 @@ def test_invalid_client_is_not_created(change):
         ("+44 20 7946 0958", "[телефон]"),
         ("Telegram @ivan_petrov", "Telegram [мессенджер]"),
         ("https://t.me/ivan_petrov и wa.me/79161234567", "[мессенджер] и [мессенджер]"),
+        ("Почта: ivan [at] alpha.ru", "Почта: [e-mail]"),
+        ("ivan(at)alpha.ru", "[e-mail]"),
+        ("ivan собака alpha точка ru", "[e-mail]"),
+        ("Страница vk.com/id12345", "Страница [профиль]"),
+        ("https://instagram.com/ivan.petrov", "[профиль]"),
     ],
 )
 def test_contacts_are_masked(text, masked):
@@ -269,6 +281,7 @@ def test_contacts_are_masked(text, masked):
         "Бюджет 200 000 – 700 000 ₽",
         "В 2024 году 40 сотрудников",
         "Сайт https://alpha-auto.ru/contacts",
+        "Выручка 12 000 000 000 руб, бюджет 1 500 000 руб",
     ],
 )
 def test_company_data_is_kept(text):
@@ -394,6 +407,13 @@ def test_llm_check_prints_status_and_usage_without_the_key(capsys):
     assert transport.calls[0][2]["response_format"]["json_schema"]["schema"] == llm_cmd.CHECK_SCHEMA
 
 
+def test_llm_check_does_not_print_an_unexpected_answer(capsys):
+    transport = FakeTransport(answer('{"ok": true, "segment": "\\u001b[31mHACK"}'))
+    assert llm_cmd.handle(SimpleNamespace(llm=client(transport)), None) == 1
+    out = capsys.readouterr().out
+    assert "неожиданный" in out and "HACK" not in out
+
+
 def test_llm_check_reports_a_failure(capsys):
     app = SimpleNamespace(llm=client(FakeTransport(HttpResponse(402, {}, b"{}"))))
     assert llm_cmd.handle(app, None) == 1
@@ -461,3 +481,58 @@ def test_an_answer_written_by_the_schema_parses():
         today=__import__("datetime").date(2026, 10, 18),
     )  # fmt: skip
     assert result.insufficient_evidence
+
+
+# --- Redirects never carry the key (review A on #13) --------------------------------------
+
+
+@pytest.mark.parametrize("code", [301, 302, 303, 307, 308])
+def test_redirect_is_not_followed_and_the_key_stays(code):
+    import http.server
+    import threading
+
+    received = []
+
+    class Thief(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            received.append(self.headers.get("Authorization"))
+            self.send_response(200)
+            self.send_header("Content-Length", "2")
+            self.end_headers()
+            self.wfile.write(b"{}")
+
+        do_POST = do_GET
+
+        def log_message(self, *args):
+            pass
+
+    thief = http.server.HTTPServer(("127.0.0.1", 0), Thief)
+
+    class Provider(http.server.BaseHTTPRequestHandler):
+        def do_POST(self):
+            self.rfile.read(int(self.headers["Content-Length"]))
+            self.send_response(code)
+            self.send_header("Location", f"http://127.0.0.1:{thief.server_port}/steal")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+
+        def log_message(self, *args):
+            pass
+
+    provider = http.server.HTTPServer(("127.0.0.1", 0), Provider)
+    for server in (thief, provider):
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        llm = OpenAICompatibleClient(
+            base_url=f"http://127.0.0.1:{provider.server_port}/v1",
+            model="local-model",
+            api_key=KEY,
+            tariff=None,
+            timeout_s=5,
+        )
+        result = llm.complete_json(REQUEST)
+    finally:
+        provider.shutdown()
+        thief.shutdown()
+    assert received == []
+    assert result.data is None and result.error_code is LlmErrorCode.UNKNOWN

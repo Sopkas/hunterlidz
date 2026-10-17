@@ -59,6 +59,10 @@ def handle(app, args: argparse.Namespace) -> int:
         print(f"повторить через: {result.retry_after_s} с")
     if result.status is LlmStatus.SUCCESS:
         segment = result.data.get("segment") if isinstance(result.data, dict) else None
-        print(f"ответ:    сегмент {segment!r}")
-        return 0
+        # The model's own text is not printed: only whether it is one of the allowed values.
+        allowed = CHECK_SCHEMA["properties"]["segment"]["enum"]
+        if segment in allowed:
+            print(f"ответ:    сегмент {segment}")
+            return 0
+        print("ответ:    неожиданный, сегмент не из допустимых значений")
     return 1
