@@ -24,6 +24,8 @@ grep -rnE "^from hunter\.(infrastructure|presentation|runtime)" src/hunter/domai
 grep -rnE "^from hunter\.(infrastructure|runtime)" src/hunter/presentation
 ```
 
+Общие доменные типы и их инварианты — контракт зон A и B: `docs/domain-contract.md`.
+
 ## Принципы
 
 - **Сценарий — единственный координатор.** Адаптеры не вызывают друг друга.
