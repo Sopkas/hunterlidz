@@ -92,7 +92,11 @@ class Tariff:
             # Prices come from settings: a float would fail later inside Decimal arithmetic.
             if not isinstance(price, Decimal) or price < 0:
                 raise ValueError("a price is a non-negative Decimal")
-        if len(self.currency) != 3 or not self.currency.isalpha() or not self.currency.isupper():
+        if (
+            len(self.currency) != 3
+            or not (self.currency.isascii() and self.currency.isalpha())
+            or not self.currency.isupper()
+        ):
             raise ValueError("currency: ISO 4217 code, e.g. 'RUB'")
 
     def cost(self, usage: Usage) -> Decimal:

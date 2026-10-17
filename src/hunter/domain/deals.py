@@ -27,9 +27,26 @@ def _moment(value: datetime | None, name: str) -> None:
     _utc(value, name)
 
 
+# numeric(18, 2) in storage (S4-05): kopecks and cents, up to 16 digits before the point.
+MONEY_DECIMALS = 2
+MONEY_LIMIT = Decimal(10) ** 16
+
+
 def _currency(value: str) -> None:
-    if len(value) != 3 or not value.isalpha() or not value.isupper():
+    # isascii: "РУБ" is upper-case letters too, and would split the metrics into two keys.
+    if len(value) != 3 or not value.isascii() or not value.isalpha() or not value.isupper():
         raise ValueError("currency: ISO 4217 code, e.g. 'RUB'")
+
+
+def _amount(value: object, name: str) -> None:
+    """A positive finite Decimal that fits numeric(18, 2); otherwise ValueError, never
+    decimal.InvalidOperation (NaN would raise that on the first comparison)."""
+    if not isinstance(value, Decimal) or not value.is_finite():
+        raise ValueError(f"{name} must be a finite Decimal")
+    if value <= 0 or value >= MONEY_LIMIT:
+        raise ValueError(f"{name} must be positive and below 10^16")
+    if value.as_tuple().exponent < -MONEY_DECIMALS:
+        raise ValueError(f"{name}: at most {MONEY_DECIMALS} digits after the point")
 
 
 @dataclass(frozen=True, slots=True)
@@ -40,10 +57,7 @@ class Money:
     currency: str
 
     def __post_init__(self) -> None:
-        if not isinstance(self.amount, Decimal) or not self.amount.is_finite():
-            raise ValueError("amount must be a finite Decimal")
-        if self.amount <= 0:
-            raise ValueError("amount must be positive")
+        _amount(self.amount, "amount")
         _currency(self.currency)
 
 
@@ -93,6 +107,9 @@ class Proposal:
 
     price is the amount, or the lower end when price_max gives a range in the same currency
     (doc 06: "сумма или обоснованный диапазон"). product is the offer of doc 02 it sells.
+
+    Only the status changes after creation (the client answered, a newer version went out), so
+    the record has a version for expected_version; new text or price is a new proposal_version.
     """
 
     id: str
@@ -104,10 +121,12 @@ class Proposal:
     product: Product | None = None
     price: Money | None = None
     price_max: Decimal | None = None
+    version: int = 1
 
     def __post_init__(self) -> None:
         _id(self.id)
         _id(self.lead_id, "lead_id")
+        _version(self.version)
         if self.proposal_version < 1:
             raise ValueError("proposal_version starts at 1")
         if not self.artifact_ref.strip():
@@ -120,8 +139,9 @@ class Proposal:
         if self.price_max is not None:
             if self.price is None:
                 raise ValueError("price_max needs price as the lower end of the range")
-            if not isinstance(self.price_max, Decimal) or self.price_max <= self.price.amount:
-                raise ValueError("price_max is a Decimal above price")
+            _amount(self.price_max, "price_max")
+            if self.price_max <= self.price.amount:
+                raise ValueError("price_max must be above price")
 
 
 class OrderStatus(StrEnum):
@@ -201,6 +221,21 @@ def check_won(lead: Lead, orders: Iterable[Order]) -> None:
         raise WonWithoutOrderError(f"lead {lead.id}: WON requires a confirmed order")
 
 
+class OrderProposalError(ValueError):
+    """The order names a proposal of another lead, or one the client did not accept."""
+
+
+def check_order_proposal(order: Order, proposal: Proposal) -> None:
+    """Order.proposal_id must point to a proposal of the same lead that was not declined or
+    replaced; the price the order was sold at comes from it (doc 07 Proposal → Won)."""
+    if order.proposal_id != proposal.id:
+        raise OrderProposalError(f"order {order.id} names proposal {order.proposal_id}")
+    if proposal.lead_id != order.lead_id:
+        raise OrderProposalError(f"proposal {proposal.id} belongs to another lead")
+    if proposal.status in (ProposalStatus.DECLINED, ProposalStatus.SUPERSEDED):
+        raise OrderProposalError(f"proposal {proposal.id} is {proposal.status}")
+
+
 def paid(order: Order, payments: Iterable[Payment]) -> Decimal:
     """Net amount received for `order`: receipts minus refunds, in the order's currency.
 
@@ -221,7 +256,8 @@ def paid(order: Order, payments: Iterable[Payment]) -> Decimal:
 
 
 def contracted_value(orders: Iterable[Order]) -> dict[str, Decimal]:
-    """Doc 07 Contracted value per currency; cancelled orders do not count."""
+    """Doc 07 Contracted value per currency; cancelled orders do not count. Sums whatever it is
+    given: the report (S4-03) selects the period by accepted_at before calling it."""
     totals: dict[str, Decimal] = {}
     for order in orders:
         if order.status in ACTIVE_ORDER:
@@ -231,7 +267,8 @@ def contracted_value(orders: Iterable[Order]) -> dict[str, Decimal]:
 
 
 def cash_received(payments: Iterable[Payment]) -> dict[str, Decimal]:
-    """Doc 07 Cash received per currency: receipts minus refunds, never mixed with orders."""
+    """Doc 07 Cash received per currency: receipts minus refunds, never mixed with orders.
+    The period is selected by received_at before calling it (S4-03)."""
     totals: dict[str, Decimal] = {}
     for payment in payments:
         sign = 1 if payment.kind is PaymentKind.RECEIPT else -1

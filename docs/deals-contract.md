@@ -7,7 +7,7 @@
 ## Общие правила
 
 - Объект либо валиден, либо не создаётся: проверки в `__post_init__`, `frozen=True, slots=True`.
-- Деньги — `Money`: положительный конечный `Decimal` и код валюты ISO 4217. `float` и целое число не принимаются. Возврат — тоже положительная сумма, знак задаёт вид платежа.
+- Деньги — `Money`: положительный конечный `Decimal` не больше двух знаков после запятой и меньше 10¹⁶ — под `numeric(18, 2)` в S4-05. Код валюты — ISO 4217 латиницей: `РУБ` не проходит, иначе метрики разойдутся на два ключа. `float` и целое число не принимаются. Верхняя граница цены КП проверяется так же: `Infinity` и `NaN` дают `ValueError`, а не `InvalidOperation`. Возврат — тоже положительная сумма, знак задаёт вид платежа.
 - Суммы разных валют не складываются: итоги считаются по каждой валюте отдельно (документ 07).
 - Момент времени — обязательный `datetime` с часовым поясом (UTC).
 
@@ -16,7 +16,7 @@
 | Тип | Поля | Инварианты |
 | --- | --- | --- |
 | `Meeting` | id, lead_id, scheduled_at, status, version, held_at, outcome | `status`: scheduled / held / cancelled / no_show. `held_at` задан ровно у проведённой встречи |
-| `Proposal` | id, lead_id, proposal_version, artifact_ref, sent_at, status, product, price, price_max | Версия от 1, документ КП обязателен. `status`: sent / accepted / declined / superseded. `price_max` — только вместе с `price` и больше неё |
+| `Proposal` | id, lead_id, proposal_version, artifact_ref, sent_at, status, product, price, price_max, version | Версия от 1, документ КП обязателен. `status`: sent / accepted / declined / superseded. `price_max` — только вместе с `price` и больше неё |
 | `Order` | id, lead_id, accepted_at, basis_ref, amount, status, version, proposal_id | Основание (`basis_ref`) обязательно. `status`: confirmed / in_progress / completed / cancelled |
 | `Payment` | id, order_id, received_at, amount, kind, external_reference | `kind`: receipt / refund |
 
@@ -24,10 +24,11 @@
 
 | Функция | Что делает | Документ |
 | --- | --- | --- |
+| `check_order_proposal(order, proposal)` | Заказ ссылается на КП того же лида, не `declined` и не `superseded`. Иначе `OrderProposalError` | 07: Proposal → Won и цена продажи |
 | `check_won(lead, orders)` | Лид в WON без действующего заказа (не `cancelled`) → `WonWithoutOrderError`. Другие стадии не проверяются | 04: WON — подтверждённый заказ с основанием |
 | `paid(order, payments)` | Поступило по заказу: поступления минус возвраты, в валюте заказа. Платёж в другой валюте или возвраты больше поступлений — `ValueError`: это ошибка учёта, а не отрицательный баланс | 10: возврат вычитается |
-| `contracted_value(orders)` | Сумма действующих заказов по валютам | 07: Contracted value |
-| `cash_received(payments)` | Поступления минус возвраты по валютам | 07: Cash received, не смешивать с суммой заказов |
+| `contracted_value(orders)` | Сумма действующих заказов по валютам. Период (`accepted_at`) отбирает вызывающий код | 07: Contracted value |
+| `cash_received(payments)` | Поступления минус возвраты по валютам. Период (`received_at`) отбирает вызывающий код | 07: Cash received, не смешивать с суммой заказов |
 | `proposal_opportunities(proposals)` | Число лидов с переданным КП: версии одного КП не добавляют возможность | 07: Proposals |
 | `calls_held(meetings)` | Только проведённые встречи, без отмен и no-show | 07: Calls held |
 
@@ -42,7 +43,7 @@ WON не означает оплату: заказ есть, денег ещё �
 | 3 | `Proposal.product` — какой оффер документа 02 предлагали | В таблице `proposals` поля нет. У лида уже есть `product`, но КП может предлагать другой оффер: после MVP Launch — External Product Team (документ 06). Нужен, чтобы считать конверсию и маржу по офферам |
 | 4 | Цена КП — `price` и необязательный `price_max` вместо одного `amount` | Документ 06: «сумма или обоснованный диапазон». Диапазон в одном поле не записать. Цена может отсутствовать, если КП ещё без суммы |
 | 5 | `Order.proposal_id` — какое КП принято | В таблице `orders` поля нет. Нужен для Proposal → Won (документ 07) и чтобы знать, по какой цене продали |
-| 6 | `version` у `Meeting` и `Order` | Документ 10: у изменяемых сущностей есть `version`. Исход встречи и статус заказа меняются с `expected_version`. КП и платёж не меняются: новая версия КП — новая запись |
+| 6 | `version` у `Meeting`, `Order` и `Proposal` | Документ 10: у изменяемых сущностей есть `version`. У КП после создания меняется только статус (клиент ответил, вышла новая версия), и это тоже идёт с `expected_version`. Новый текст или цена — новая запись с новым `proposal_version`. Платёж не меняется |
 | 7 | `created_at`, `updated_at`, формат UUID | Как в контракте S1-05: метаданные хранения ведёт база (S4-05) |
 
 ## Что сюда не вошло

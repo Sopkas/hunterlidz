@@ -12,6 +12,7 @@ from hunter.domain.deals import (
     MeetingStatus,
     Money,
     Order,
+    OrderProposalError,
     OrderStatus,
     Payment,
     PaymentKind,
@@ -20,6 +21,7 @@ from hunter.domain.deals import (
     WonWithoutOrderError,
     calls_held,
     cash_received,
+    check_order_proposal,
     check_won,
     contracted_value,
     paid,
@@ -76,9 +78,16 @@ def lead(stage: Stage) -> Lead:
         (100, "RUB"),
         (Decimal("1"), "rub"),
         (Decimal("1"), "RUBL"),
+        (Decimal("1"), "РУБ"),
+        (Decimal("0.001"), "RUB"),
+        (Decimal("1E+16"), "RUB"),
+        (Decimal("sNaN"), "RUB"),
     ],
-    ids=["zero", "negative", "nan", "infinity", "float", "int", "lower-case", "long-code"],
-)
+    ids=[
+        "zero", "negative", "nan", "infinity", "float", "int", "lower-case", "long-code",
+        "cyrillic-code", "three-decimals", "too-large", "signalling-nan",
+    ],
+)  # fmt: skip
 def test_bad_money_is_rejected(amount, currency):
     with pytest.raises(ValueError):
         Money(amount, currency)
@@ -160,10 +169,14 @@ def test_proposal_without_price_is_allowed():
         dict(price_max=Decimal("200000")),
         dict(price_max=Decimal("100")),
         dict(price_max=700000.0),
+        dict(price_max=Decimal("Infinity")),
+        dict(price_max=Decimal("NaN")),
+        dict(price_max=Decimal("sNaN")),
+        dict(version=0),
     ],
     ids=[
         "version", "no-document", "naive", "string-status", "string-product", "max-alone",
-        "max-equal", "max-below", "max-float",
+        "max-equal", "max-below", "max-float", "max-infinity", "max-nan", "max-snan", "version",
     ],
 )  # fmt: skip
 def test_invalid_proposal_is_not_created(change):
@@ -280,3 +293,33 @@ def test_cash_received_is_per_currency_and_not_the_order_sum():
     ]
     assert cash_received(payments) == {"RUB": Decimal("80000"), "USD": Decimal("500")}
     assert cash_received(payments) != contracted_value([ORDER])
+
+
+def test_money_fits_two_decimals():
+    assert Money(Decimal("199999.99"), "RUB").amount == Decimal("199999.99")
+    assert Money(Decimal("2E+5"), "RUB").amount == Decimal("200000")
+
+
+def test_proposal_status_changes_with_its_version():
+    # Review A on #9: the status changes after creation, so expected_version needs a version.
+    accepted = replace(PROPOSAL, status=ProposalStatus.ACCEPTED, version=2)
+    assert accepted.version == 2 and accepted.proposal_version == 1
+
+
+def test_order_names_an_accepted_proposal_of_its_lead():
+    check_order_proposal(ORDER, replace(PROPOSAL, status=ProposalStatus.ACCEPTED))
+
+
+@pytest.mark.parametrize(
+    "proposal",
+    [
+        replace(PROPOSAL, lead_id="l2"),
+        replace(PROPOSAL, status=ProposalStatus.DECLINED),
+        replace(PROPOSAL, status=ProposalStatus.SUPERSEDED),
+        replace(PROPOSAL, id="p9"),
+    ],
+    ids=["other-lead", "declined", "superseded", "other-proposal"],
+)
+def test_order_cannot_name_a_wrong_proposal(proposal):
+    with pytest.raises(OrderProposalError):
+        check_order_proposal(ORDER, proposal)
