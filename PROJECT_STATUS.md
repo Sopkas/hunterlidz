@@ -14,6 +14,7 @@
 - Контракт research_v1.1 (`domain/research.py`: схема и механические проверки документа 11, T-06) и LLM-порт (`application/llm.py`: статусы success / denied / invalid / timeout / error, usage и стоимость в каждом ответе); `docs/research-contract.md` (S2-01, ждёт Approve обеих зон).
 - Реестр кейсов и правило T-07 (`case_text_v2`): о кейсе — только утверждёнными владельцем формулировками, иначе Approve блокируется; 14 формулировок четырёх кейсов документа 01 — `data/case_claims.json`, правила — `docs/case-claims.md` (S2-03).
 - Контракт сделки: `Meeting`, `Proposal`, `Order`, `Payment`, `Money`; WON только с действующим заказом, возврат вычитается, валюты не смешиваются; метрики документа 07 — `docs/deals-contract.md` (S4-04, ждёт Approve обеих зон).
+- Scoring документа 04 (`scoring_v1`): один уровень на компонент с причиной, противоречия → проверка; готовность к очереди с жёсткими и мягкими условиями и записанным исключением оператора — `docs/scoring.md` (S2-08).
 
 ## Что ещё не сделано
 
@@ -90,3 +91,5 @@
 | 2026-10-18 | S1-06 | A | По ревью A на #10: пункты 5–8 ADR-0003 — «принято, тимлид 18.10»; закреплены `greenlet` и транзитивные пакеты pytest; защита тестов убирает `PGHOST`, `PGHOSTADDR`, `PGSERVICE`, `PGSERVICEFILE` | См. ответ на ревью в PR | Approve тимлида |
 | 2026-10-18 | S4-04 | B | КОНТРАКТ: встречи, КП, заказы и оплаты по документам 04, 06, 07, 10; `check_won`, `paid`, `contracted_value`, `cash_received`, `proposal_opportunities`, `calls_held`; семь отклонений от документа 10 записаны | 731 passed (58 новых), ruff чисто (macOS, Python 3.14) | Approve Максима за зону A; миграции и сценарии — S4-05 |
 | 2026-10-18 | S4-04 | B | По ревью A на #9: `price_max` проверяется на конечность (`Infinity`, `NaN` → `ValueError`); у `Proposal` есть `version`; код валюты только латиницей (и в `Tariff`); суммы до двух знаков под `numeric(18, 2)`; `check_order_proposal`; период метрик — у вызывающего кода | 750 passed, ruff чисто (macOS, Python 3.14) | Повторное ревью Максима |
+| 2026-10-18 | S2-08 | B | `domain/scoring.py` из `608dc6b`, приведён к S2-01, S2-03 и S1-13: компоненты документа 04 с причинами, `eligibility` (T-05), `OperatorException` (решение по T-06) | 737 passed (64 новых), ruff чисто (macOS, Python 3.14) | Таблица `scores` — после S1-07; сценарий — S2-10 |
+| 2026-10-18 | S2-08 | B | По ревью A на #11 (Approve): в контракте записано, что `contacts` — без контактов под запретом, `today` — деловая дата как у `parse_research`, исключение — на один результат; неиспользуемый `AUTO_QUEUE_MIN_SCORE` убран | 741 passed, ruff чисто (macOS, Python 3.14) | Повторный взгляд Максима |
