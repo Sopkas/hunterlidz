@@ -1,2 +1,4 @@
 # Runtime dependencies, pinned to exact versions. New ones go through the zone A coordinator.
-# None yet: the database driver and migrations arrive with S1-06.
+# publicsuffixlist: company key by the public suffix list, list bundled, no network (S1-09).
+# The database driver and migrations arrive with S1-06.
+publicsuffixlist==1.1.0.20261010
