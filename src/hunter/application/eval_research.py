@@ -205,6 +205,7 @@ class CardResult:
     checks: tuple[Check, ...] = ()
     dropped_refs: int = 0  # references to unknown evidence that parse_research dropped (T-06)
     error: str | None = None
+    problems: tuple[str, ...] = ()  # what parse_research dropped; ids only, no model text
 
     @property
     def schema_ok(self) -> bool:
@@ -346,6 +347,7 @@ def run_card(card: EvalCard, client: LlmClient, registry: CaseRegistry) -> CardR
         cost,
         checks=tuple(_checks(card, research, score, raw)),
         dropped_refs=dropped,
+        problems=research.problems + score.contradictions,
     )
 
 
@@ -436,6 +438,8 @@ def report_markdown(report: EvalReport) -> str:
         failed = "; ".join(f"{c.name}: {c.detail}" for c in r.checks if not c.passed) or (
             r.error or ""
         )
+        if failed and r.problems:
+            failed += " — проверка отбросила: " + "; ".join(r.problems)
         verdict = "✅" if r.passed else "❌"
         lines.append(f"| {r.card_id} | {r.kind} | {verdict} | {r.corrections} | {failed} |")
     lines.append("")
