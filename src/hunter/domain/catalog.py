@@ -24,6 +24,8 @@ class Product(StrEnum):
     EXTERNAL_PRODUCT_TEAM = "external_product_team"
 
 
+# Default offer per ICP, not an invariant: per doc 02 an existing business may buy External
+# Product Team too, so Lead does not check the icp / product pair. Do not turn this into a check.
 PRODUCT_FOR_ICP: dict[Icp, Product] = {
     Icp.FOUNDERS: Product.MVP_LAUNCH,
     Icp.EXISTING_BUSINESS: Product.BUSINESS_AUTOMATION,
