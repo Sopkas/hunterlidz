@@ -7,7 +7,7 @@ name = "hunter"
 version = "0.1.0"
 description = "Hunter v0: lead research, scoring and human-approved outreach drafts"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = ["publicsuffixlist==1.1.0.20261010"]
 
 [project.scripts]
 hunter = "hunter.runtime.main:main"
