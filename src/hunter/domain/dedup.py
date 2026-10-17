@@ -58,6 +58,8 @@ SUBDOMAIN_HOSTS = frozenset(
         "beget.tech",
         "bitrix24.ru",
         "blogspot.ru",
+        "business.site",
+        "carrd.co",
         "diafan.ru",
         "do.am",
         "flexbe.ru",
@@ -68,6 +70,7 @@ SUBDOMAIN_HOSTS = frozenset(
         "mya5.ru",
         "narod.ru",
         "nethouse.ru",
+        "notion.site",
         "nubex.ru",
         "platformalp.ru",
         "taplink.ws",
@@ -79,37 +82,73 @@ SUBDOMAIN_HOSTS = frozenset(
         "ucoz.ru",
         "ukit.me",
         "umi.ru",
+        "webflow.io",
         "weebly.com",
+        "wixsite.com",
         "wordpress.com",
     }
 )
 
-# Platforms where a company has a page under a path (vk.com/name, t.me/name) and registries
-# that describe companies. Their domain belongs to nobody we research, so it is not a key.
+# Platforms where a company has a page under a path (vk.com/name, ozon.ru/seller/name),
+# registries and catalogues that describe companies, and free mail services. Their domain
+# belongs to nobody we research, so it is not a key.
 SHARED_PLATFORMS = frozenset(
     {
         "2gis.com",
         "2gis.ru",
+        "aliexpress.ru",
         "avito.ru",
+        "behance.net",
+        "bk.ru",
         "checko.ru",
+        "dribbble.com",
         "dzen.ru",
         "facebook.com",
         "fb.com",
+        "fl.ru",
+        "flamp.ru",
         "github.com",
         "gitlab.com",
+        "gmail.com",
         "google.com",
+        "googlemail.com",
         "habr.com",
         "hh.ru",
+        "hotmail.com",
+        "icloud.com",
+        "inbox.ru",
         "instagram.com",
+        "internet.ru",
+        "irecommend.ru",
+        "kwork.ru",
         "linkedin.com",
         "linktr.ee",
         "list-org.com",
+        "list.ru",
+        "live.com",
+        "mail.ru",
+        "max.ru",
+        "medium.com",
+        "megamarket.ru",
+        "nalog.ru",
+        "notion.so",
         "ok.ru",
+        "otzovik.com",
+        "outlook.com",
+        "ozon.ru",
+        "pinterest.com",
+        "proton.me",
+        "protonmail.com",
+        "pulscen.ru",
+        "rambler.ru",
         "rusprofile.ru",
         "rutube.ru",
+        "sbis.ru",
+        "spark-interfax.ru",
         "t.me",
         "taplink.cc",
         "telegram.me",
+        "tenchat.ru",
         "tiktok.com",
         "twitter.com",
         "vc.ru",
@@ -118,12 +157,44 @@ SHARED_PLATFORMS = frozenset(
         "vk.ru",
         "wa.me",
         "whatsapp.com",
+        "wildberries.ru",
         "x.com",
+        "ya.ru",
+        "yahoo.com",
+        "yandex.by",
         "yandex.com",
+        "yandex.kz",
         "yandex.ru",
+        "yell.ru",
+        "youdo.com",
         "youtu.be",
         "youtube.com",
+        "zachestnyibiznes.ru",
+        "zakupki.gov.ru",
         "zoon.ru",
+    }
+)
+
+# Link shorteners hide the real address. Their domain is not a key either, and unlike a shared
+# platform the page itself is unknown, so the import asks for the full address (UrlError).
+URL_SHORTENERS = frozenset(
+    {
+        "bit.do",
+        "bit.ly",
+        "buff.ly",
+        "clck.ru",
+        "cutt.ly",
+        "goo.gl",
+        "is.gd",
+        "lnkd.in",
+        "ow.ly",
+        "rebrand.ly",
+        "shorturl.at",
+        "t.co",
+        "tiny.cc",
+        "tinyurl.com",
+        "u.to",
+        "vk.cc",
     }
 )
 
@@ -164,8 +235,8 @@ def _ascii_host(raw: str) -> str:
         raise UrlError("host", "host is not a valid domain name") from None
     if not all(_HOST_LABEL.match(label) for label in host.split(".")):
         raise UrlError("host", "host is not a valid domain name")
-    if host.startswith("www.") and host.count(".") >= 2:
-        host = host[4:]
+    while host.startswith("www.") and host.count(".") >= 2:
+        host = host[4:]  # "www.www.example.com" too: one call gives the final form
     return host
 
 
@@ -230,7 +301,8 @@ def company_domain(raw: str | None) -> str | None:
 
     None for an empty value, an IP address, a single-label or unknown-TLD host, a public suffix
     itself and shared platforms (vk.com/name is not a company domain). Raises UrlError for an
-    address that is not http(s) at all.
+    address that is not http(s) at all, and with code "shortener" for a link shortener: the
+    real address is unknown, the import asks for it.
     """
     if raw is None or not raw.strip():
         return None
@@ -247,6 +319,8 @@ def company_domain(raw: str | None) -> str | None:
         if host.endswith("." + builder):
             return host[: -len(builder) - 1].rsplit(".", 1)[-1] + "." + builder
     domain = _suffix_list().privatesuffix(host, accept_unknown=False)
+    if domain in URL_SHORTENERS:
+        raise UrlError("shortener", "a link shortener hides the site address; give the full one")
     if domain is None or domain in SHARED_PLATFORMS:
         return None
     return domain
@@ -322,6 +396,11 @@ def match_company(*, name: str, domain: str | None, companies: Iterable[Company]
 
     domain is the result of company_domain(). A match on a merged record resolves to the
     company it was merged into.
+
+    `companies` is not the whole table. The store (S1-07) passes the candidates: companies with
+    this domain, every company on their merge chains up to the active one, and active companies
+    with the same normalize_company_name(). A chain cut short raises ValueError, so a missing
+    candidate is a loud error, not a silent new company.
     """
     by_id = {c.id: c for c in companies}
     if domain is not None:
