@@ -175,10 +175,11 @@ def test_only_the_claims_research_chose_are_offered():
         (f"{CLAIM_TEXT} на 300 автосалонов.", "not_confirmed"),
         (f"{CLAIM_TEXT}. Она уже окупилась за 3 месяца.", "continues_case"),
         ("   ", "нет текста"),
+        ("Добрый день,Сеть открыла сервис.Мы видим рост.", "склеены"),
     ],
     ids=[
         "too-long", "placeholder", "bracket-name", "evidence-id", "claim-id", "doc-name",
-        "paraphrased-case", "number-next-to-case", "continued-case", "blank",
+        "paraphrased-case", "number-next-to-case", "continued-case", "blank", "glued",
     ],
 )  # fmt: skip
 def test_text_problems_block_approval(body, blocker):

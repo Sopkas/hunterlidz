@@ -35,6 +35,10 @@ _REFERENCE = re.compile(
 )
 
 
+# Sentences glued together: "Добрый день,Сеть…", "…Мытищах.Мы…" (first live run, 18.10).
+_GLUED = re.compile(r"[,.!?;:…»)][А-ЯЁA-Z«]")
+
+
 @dataclass(frozen=True, slots=True)
 class Draft:
     body: str | None  # None: the model asked for review without a text
@@ -116,6 +120,8 @@ def body_blockers(
         problems.append(f"текст длиннее {limit} символов ({len(body)})")
     if _PLACEHOLDER.search(body):
         problems.append("в тексте остались незаполненные поля")
+    if _GLUED.search(body):
+        problems.append("предложения склеены: нет пробела после знака препинания")
     if _REFERENCE.search(body):
         problems.append("в тексте остались служебные ссылки (E1, [..], ID кейса, имя документа)")
     for violation in check_case_text(body, registry=registry, attached_ids=case_claim_ids):

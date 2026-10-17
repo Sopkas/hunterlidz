@@ -142,7 +142,7 @@ def build_research_request(
 
 
 DRAFT_PROMPT_VERSION = "draft_prompt_v1"
-DRAFT_MAX_OUTPUT_TOKENS = 1200
+DRAFT_MAX_OUTPUT_TOKENS = 3000  # reasoning models spend output tokens on thinking too
 
 DRAFT_TEMPLATE = """\
 Подготовь одно первое сообщение для {contact_role} компании {company_name}.
