@@ -25,6 +25,18 @@ def test_guard_stops_libpq_before_a_remote_host(block_network):
     block_network.clear()  # the attempts were the point of this test
 
 
+def test_guard_reads_libpq_environment(block_network, monkeypatch):
+    # Review A on #10: without a host in conninfo, libpq connects to PGHOST or a service.
+    monkeypatch.setenv("PGHOST", "10.255.255.1")
+    with pytest.raises(OSError, match="forbidden"):
+        psycopg.connect(dbname="hunter", connect_timeout=1)
+    monkeypatch.delenv("PGHOST")
+    with pytest.raises(OSError, match="service"):
+        psycopg.connect("service=production")
+    assert len(block_network) == 2
+    block_network.clear()
+
+
 def test_postgres_answers_through_sqlalchemy(database_url):
     # HUNTER_*_DATABASE_URL is plain postgresql://; SQLAlchemy would pick psycopg2 for it.
     engine = create_engine(make_url(database_url).set(drivername="postgresql+psycopg"))

@@ -43,7 +43,14 @@ def block_network(monkeypatch):
 
     def guarded_pg_connect(conninfo="", **kwargs):
         params = conninfo_to_dict(conninfo, **kwargs)
-        hosts = ",".join(str(params.get(key) or "") for key in ("host", "hostaddr")).split(",")
+        if params.get("service") or os.environ.get("PGSERVICE"):
+            attempts.append("postgres service")
+            raise OSError("network access in tests is forbidden: postgres service file")
+        # Without a host in conninfo libpq takes PGHOST / PGHOSTADDR from the environment.
+        hosts = ",".join(
+            str(params.get(key) or os.environ.get(env) or "")
+            for key, env in (("host", "PGHOST"), ("hostaddr", "PGHOSTADDR"))
+        ).split(",")
         # No host or a socket directory ("/run/postgresql") stays on this machine.
         remote = [h for h in hosts if h and not h.startswith("/") and h not in _LOOPBACK]
         if remote:
@@ -51,6 +58,9 @@ def block_network(monkeypatch):
             raise OSError(f"network access in tests is forbidden: postgres {remote}")
         return real_pg_connect(conninfo, **kwargs)
 
+    # A developer's own libpq settings must not steer test connections (review A on #10).
+    for name in ("PGHOST", "PGHOSTADDR", "PGSERVICE", "PGSERVICEFILE"):
+        monkeypatch.delenv(name, raising=False)
     monkeypatch.setattr(socket.socket, "connect", guarded_connect)
     monkeypatch.setattr(socket, "getaddrinfo", guarded_getaddrinfo)
     # SQLAlchemy calls psycopg.connect, a reference taken at import, so both are replaced.
