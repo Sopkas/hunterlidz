@@ -17,6 +17,7 @@ Boundaries: pure validation; the caller passes `today`, the aliases and the allo
 
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import date
@@ -45,6 +46,7 @@ MAX_FACTS = 10
 MAX_SIGNALS = 3
 MAX_CLAIMS = 3
 MAX_MISSING = 10
+MAX_REFS = 10  # evidence ids of one fact, signal or feature
 
 BOOLEAN_FEATURES = (
     "segment_match",
@@ -193,7 +195,7 @@ def parse_research(
         raise SchemaError(f"нет полей: {sorted(missing)}")
     extra = set(payload) - _TOP_LEVEL
     if extra:
-        raise SchemaError(f"лишние поля: {sorted(extra)}")
+        raise SchemaError(f"лишние поля: {_shown(extra)}")
     if payload["schema_version"] != SCHEMA_VERSION:
         raise SchemaError(f"schema_version: ожидается {SCHEMA_VERSION}")
     if payload["lead_id"] != lead_id or payload["company_id"] != company_id:
@@ -243,11 +245,11 @@ def parse_research(
     claims = _strings(payload, "relevant_case_claim_ids", MAX_CLAIMS)
     forbidden = [c for c in claims if c not in allowed_claim_ids]
     if forbidden:
-        problems.append(f"relevant_case_claim_ids: неразрешённые кейсы удалены {forbidden}")
+        problems.append(f"relevant_case_claim_ids: неразрешённые кейсы удалены {_shown(forbidden)}")
 
     features = _features(payload["scoring_inputs"], refs, allowed_claim_ids, problems)
     if refs.unknown:
-        problems.append(f"ссылки на несуществующие evidence удалены: {sorted(refs.unknown)}")
+        problems.append(f"ссылки на несуществующие evidence удалены: {_shown(refs.unknown)}")
 
     offer = _object(payload["offer"], "offer", {"what_we_sell", "why"})
     needs_review = payload["needs_review"]
@@ -299,11 +301,24 @@ class _Refs:
         kept. `extra` are ids accepted as they are (case claims for relevant_case_confirmed)."""
         if not isinstance(raw, list) or not all(isinstance(x, str) for x in raw):
             raise SchemaError(f"{key}.evidence_ids: ожидается массив строк")
+        if len(raw) > MAX_REFS:
+            raise SchemaError(f"{key}.evidence_ids: больше {MAX_REFS} элементов")
         unknown = [x for x in raw if x not in self.aliases and x not in extra]
         if unknown:
             self.unknown.update(unknown)
             return ()
         return tuple(dict.fromkeys(x if x in extra else self.aliases[x] for x in raw))
+
+
+_SAFE_TOKEN = re.compile(r"^[A-Za-z0-9_.:-]{1,40}$")
+
+
+def _shown(values) -> str:
+    """Values written by the model, safe to store and show: identifiers like E7 or
+    auto_crm.experience:v1 are named, anything else is only counted (it may hold a contact)."""
+    safe = sorted(v for v in values if _SAFE_TOKEN.match(v))
+    hidden = len(set(values)) - len(safe)
+    return str(safe) + (f", недопустимых значений: {hidden}" if hidden else "")
 
 
 def _features(
@@ -319,10 +334,11 @@ def _features(
             value = item["value"]
             if value in (None, "", "unknown"):
                 value = None
+            elif isinstance(value, str) and value in ("true", "false"):
+                value = value == "true"
             elif not isinstance(value, bool):
-                value = {"true": True, "false": False}.get(value, "bad")
-                if value == "bad":
-                    raise SchemaError(f"{key}.value: true / false / unknown")
+                # Lists, objects and numbers too: a shape error, never a TypeError.
+                raise SchemaError(f"{key}.value: true / false / unknown")
         elif name == "budget_evidence_level":
             value = _enum(BudgetLevel, item["value"], f"{key}.value")
         else:

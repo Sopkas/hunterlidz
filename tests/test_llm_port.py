@@ -16,7 +16,12 @@ from hunter.application.llm import (
 )
 
 REQUEST = LlmRequest(
-    call_id="run-1:1", system="rules", user="task", schema={}, max_output_tokens=3000
+    call_id="run-1:1",
+    prompt_version="research_prompt_v1",
+    system="rules",
+    user="task",
+    schema={},
+    max_output_tokens=3000,
 )
 TARIFF = Tariff(Decimal("40"), Decimal("120"), "RUB")
 USAGE = Usage(input_tokens=12_000, output_tokens=2_000)
@@ -107,11 +112,52 @@ def test_inconsistent_result_is_not_created(fields):
         lambda: Usage(-1, 0),
         lambda: Tariff(Decimal("-1"), Decimal("1"), "RUB"),
         lambda: Tariff(Decimal("1"), Decimal("1"), "rub"),
-        lambda: LlmRequest("", "s", "u", {}, 100),
-        lambda: LlmRequest("c", "s", "u", {}, 0),
+        lambda: LlmRequest("", "p1", "s", "u", {}, 100),
+        lambda: LlmRequest("c", "", "s", "u", {}, 100),
+        lambda: LlmRequest("c", "p1", "s", "u", {}, 0),
+        lambda: Tariff(0.5, Decimal("1"), "RUB"),
+        lambda: Usage(1.5, 0),
     ],
-    ids=["negative-tokens", "negative-price", "currency-case", "no-call-id", "no-output"],
+    ids=[
+        "negative-tokens",
+        "negative-price",
+        "currency-case",
+        "no-call-id",
+        "no-prompt-version",
+        "no-output",
+        "float-price",
+        "float-tokens",
+    ],
 )
 def test_invalid_inputs_are_rejected(build):
     with pytest.raises(ValueError):
         build()
+
+
+def test_usage_adds_up_over_a_run():
+    assert Usage(10, 2) + Usage(5, 1) == Usage(15, 3)
+
+
+def test_timeout_usage_is_unknown_not_free():
+    # Review A on #8: the budget charges the reserve, never zero (S2-07).
+    result = LlmResult.failure(REQUEST, "polza:model", LlmErrorCode.TIMEOUT, Usage(0, 0), TARIFF)
+    assert result.usage_unknown and result.cost == 0
+    other = LlmResult.failure(REQUEST, "polza:model", LlmErrorCode.UNAVAILABLE, USAGE, TARIFF)
+    assert not other.usage_unknown
+
+
+def test_retry_after_travels_with_a_retryable_failure():
+    result = LlmResult.failure(
+        REQUEST, "polza:model", LlmErrorCode.RATE_LIMITED, USAGE, TARIFF, retry_after_s=30
+    )
+    assert result.retryable and result.retry_after_s == 30
+
+
+@pytest.mark.parametrize(
+    ("code", "seconds"),
+    [(LlmErrorCode.QUOTA, 30), (LlmErrorCode.RATE_LIMITED, -1)],
+    ids=["not-retryable", "negative"],
+)
+def test_retry_after_is_checked(code, seconds):
+    with pytest.raises(ValueError):
+        LlmResult.failure(REQUEST, "polza:model", code, USAGE, TARIFF, retry_after_s=seconds)

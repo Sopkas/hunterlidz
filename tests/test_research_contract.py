@@ -276,6 +276,41 @@ def test_malformed_payload_is_a_schema_error(change):
         parse(_broken(change))
 
 
+@pytest.mark.parametrize("name", FEATURES[:6])
+@pytest.mark.parametrize(
+    "value", [[], {}, 1, 1.5, "yes"], ids=["list", "object", "int", "float", "word"]
+)
+def test_boolean_feature_of_another_type_is_a_schema_error(name, value):
+    # Review A on #8: unhashable values used to raise TypeError instead of SchemaError.
+    payload = load("valid")
+    payload["scoring_inputs"][name]["value"] = value
+    with pytest.raises(SchemaError):
+        parse(payload)
+
+
+def test_too_many_evidence_refs_is_a_schema_error():
+    payload = load("valid")
+    payload["facts"][0]["evidence_ids"] = ["E1"] * 11
+    with pytest.raises(SchemaError):
+        parse(payload)
+
+
+def test_extra_field_names_written_by_the_model_are_not_echoed():
+    contact = "ivan.petrov@mail.ru +79161234567"
+    with pytest.raises(SchemaError) as exc:
+        parse(_broken(lambda p: p.update({contact: 1})))
+    assert "ivan.petrov" not in str(exc.value) and "недопустимых значений: 1" in str(exc.value)
+
+
+def test_problems_do_not_echo_invented_references():
+    payload = load("valid")
+    payload["facts"][0]["evidence_ids"] = ["Иван Петров +7 916 123-45-67", "E9"]
+    payload["relevant_case_claim_ids"] = ["auto_crm.experience:v1", "Позвоните Ивану"]
+    problems = " ".join(parse(payload).problems)
+    assert "Иван" not in problems and "916" not in problems
+    assert "E9" in problems
+
+
 def test_not_an_object_is_a_schema_error():
     with pytest.raises(SchemaError):
         parse(["research"])

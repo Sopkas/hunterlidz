@@ -68,8 +68,15 @@ class Usage:
     output_tokens: int
 
     def __post_init__(self) -> None:
-        if self.input_tokens < 0 or self.output_tokens < 0:
-            raise ValueError("token counts must not be negative")
+        for count in (self.input_tokens, self.output_tokens):
+            if not isinstance(count, int) or isinstance(count, bool) or count < 0:
+                raise ValueError("token counts are non-negative integers")
+
+    def __add__(self, other: Usage) -> Usage:
+        """A research run sums its calls, the format correction included (token_usage)."""
+        return Usage(
+            self.input_tokens + other.input_tokens, self.output_tokens + other.output_tokens
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,8 +88,10 @@ class Tariff:
     currency: str
 
     def __post_init__(self) -> None:
-        if self.input_per_million < 0 or self.output_per_million < 0:
-            raise ValueError("a price must not be negative")
+        for price in (self.input_per_million, self.output_per_million):
+            # Prices come from settings: a float would fail later inside Decimal arithmetic.
+            if not isinstance(price, Decimal) or price < 0:
+                raise ValueError("a price is a non-negative Decimal")
         if len(self.currency) != 3 or not self.currency.isalpha() or not self.currency.isupper():
             raise ValueError("currency: ISO 4217 code, e.g. 'RUB'")
 
@@ -95,15 +104,19 @@ class Tariff:
 
 @dataclass(frozen=True, slots=True)
 class LlmRequest:
+    """prompt_version is stored with the run (doc 09, research_runs.prompt_version), so a call
+    record says which prompt produced the answer."""
+
     call_id: str
+    prompt_version: str
     system: str
     user: str
     schema: dict
     max_output_tokens: int
 
     def __post_init__(self) -> None:
-        if not self.call_id.strip():
-            raise ValueError("call_id is required")
+        if not self.call_id.strip() or not self.prompt_version.strip():
+            raise ValueError("call_id and prompt_version are required")
         if self.max_output_tokens < 1:
             raise ValueError("max_output_tokens must be positive")
 
@@ -114,6 +127,13 @@ class LlmResult:
 
     usage counts what the provider billed, also for failed calls (zero when nothing was
     billed). cost and currency are None together when the tariff is unknown.
+
+    usage_unknown: on timeout the provider may bill without reporting usage, so usage is zero
+    but the spend is not. The budget (S2-07) then charges the reserve of the call
+    (max_output_tokens), never zero.
+
+    retry_after_s: the provider's own wait (Retry-After) for a retryable failure, so the queue
+    (S2-06) does not retry blindly; None when the provider did not say.
     """
 
     call_id: str
@@ -124,6 +144,7 @@ class LlmResult:
     error_code: LlmErrorCode | None = None
     cost: Decimal | None = None
     currency: str | None = None
+    retry_after_s: int | None = None
 
     def __post_init__(self) -> None:
         if not self.call_id.strip() or not self.model_id.strip():
@@ -141,10 +162,19 @@ class LlmResult:
             raise ValueError("cost and currency are set together")
         if self.cost is not None and self.cost < 0:
             raise ValueError("cost must not be negative")
+        if self.retry_after_s is not None:
+            if self.error_code not in RETRYABLE:
+                raise ValueError("retry_after_s belongs to a retryable failure")
+            if not isinstance(self.retry_after_s, int) or self.retry_after_s < 0:
+                raise ValueError("retry_after_s is a non-negative number of seconds")
 
     @property
     def retryable(self) -> bool:
         return self.error_code in RETRYABLE
+
+    @property
+    def usage_unknown(self) -> bool:
+        return self.status is LlmStatus.TIMEOUT
 
     @property
     def truncated(self) -> bool:
@@ -166,6 +196,7 @@ class LlmResult:
         error_code: LlmErrorCode,
         usage: Usage,
         tariff: Tariff | None,
+        retry_after_s: int | None = None,
     ) -> LlmResult:
         return cls(
             request.call_id,
@@ -173,6 +204,7 @@ class LlmResult:
             STATUS_FOR_ERROR[error_code],
             usage,
             error_code=error_code,
+            retry_after_s=retry_after_s,
             **_priced(usage, tariff),
         )
 
