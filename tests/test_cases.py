@@ -626,6 +626,6 @@ def test_unmeasured_savings_blocked_next_to_the_quoted_service():
     assert ViolationCode.NOT_CONFIRMED in {v.code for v in found}
 
 
-def test_data_wordings_wait_for_owner_approval():
-    # The owner approved the content on 17.10; the exact texts are approved one by one.
-    assert not any(claim.usable_in_messages for claim in DATA.claims)
+def test_data_wordings_are_approved_by_the_owner():
+    # The owner approved every exact text on 17.10.
+    assert all(claim.usable_in_messages for claim in DATA.claims)

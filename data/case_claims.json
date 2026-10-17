@@ -70,16 +70,16 @@
       "status": "owner_reported",
       "external_allowed": true,
       "source_ref": "01-company-and-cases.md, кейс 1; владелец, 17.10",
-      "approved_by": null
+      "approved_by": "Sopkas (владелец), 2026-10-17"
     },
     {
       "claim_key": "careermate.full_cycle",
       "case_key": "careermate",
-      "claim_text": "CareerMate мы сделали полностью сами: примерно за год прошли путь от идеи и проектирования до запуска и первых клиентов",
+      "claim_text": "CareerMate мы сделали полностью сами: разработка заняла 4–5 месяцев, а весь путь от идеи, анализа и питчей до первых клиентов — около года",
       "status": "owner_reported",
       "external_allowed": true,
-      "source_ref": "владелец, 17.10: «около года, от идеи до получения клиентов»",
-      "approved_by": null
+      "source_ref": "владелец, 17.10: разработка 4–5 месяцев, год — анализ, питчи, поиск клиентов",
+      "approved_by": "Sopkas (владелец), 2026-10-17"
     },
     {
       "claim_key": "careermate.tech",
@@ -88,7 +88,7 @@
       "status": "owner_reported",
       "external_allowed": true,
       "source_ref": "владелец, 17.10",
-      "approved_by": null
+      "approved_by": "Sopkas (владелец), 2026-10-17"
     },
     {
       "claim_key": "careermate.award",
@@ -97,7 +97,7 @@
       "status": "owner_reported",
       "external_allowed": true,
       "source_ref": "01-company-and-cases.md, кейс 1; первоисточник от владельца 17.10: https://rmpvo.ru/feedback/contest/",
-      "approved_by": null
+      "approved_by": "Sopkas (владелец), 2026-10-17"
     },
     {
       "claim_key": "careermate.launch",
@@ -106,7 +106,7 @@
       "status": "owner_reported",
       "external_allowed": true,
       "source_ref": "05-outbound-and-follow-up.md, первое сообщение: founder",
-      "approved_by": null
+      "approved_by": "Sopkas (владелец), 2026-10-17"
     },
     {
       "claim_key": "auto_crm.experience",
@@ -115,7 +115,7 @@
       "status": "owner_reported",
       "external_allowed": true,
       "source_ref": "05-outbound-and-follow-up.md, первое сообщение: действующий бизнес",
-      "approved_by": null
+      "approved_by": "Sopkas (владелец), 2026-10-17"
     },
     {
       "claim_key": "auto_crm.scope",
@@ -124,7 +124,7 @@
       "status": "owner_reported",
       "external_allowed": true,
       "source_ref": "владелец, 17.10",
-      "approved_by": null
+      "approved_by": "Sopkas (владелец), 2026-10-17"
     },
     {
       "claim_key": "auto_crm.tech",
@@ -133,7 +133,7 @@
       "status": "owner_reported",
       "external_allowed": true,
       "source_ref": "владелец, 17.10",
-      "approved_by": null
+      "approved_by": "Sopkas (владелец), 2026-10-17"
     },
     {
       "claim_key": "auto_crm.built",
@@ -142,7 +142,7 @@
       "status": "owner_reported",
       "external_allowed": true,
       "source_ref": "sales-playbook-v1.md, §10, без «недавно» и «именно»: период работ не подтверждён",
-      "approved_by": null
+      "approved_by": "Sopkas (владелец), 2026-10-17"
     },
     {
       "claim_key": "couples_app.scope",
@@ -151,7 +151,7 @@
       "status": "owner_reported",
       "external_allowed": true,
       "source_ref": "01-company-and-cases.md, кейс 2; владелец, 17.10",
-      "approved_by": null
+      "approved_by": "Sopkas (владелец), 2026-10-17"
     },
     {
       "claim_key": "couples_app.speed",
@@ -160,7 +160,7 @@
       "status": "owner_reported",
       "external_allowed": true,
       "source_ref": "01-company-and-cases.md, кейс 2: «Срок разработки: около двух недель»; срок относится к этому кейсу, не обещание для нового MVP",
-      "approved_by": null
+      "approved_by": "Sopkas (владелец), 2026-10-17"
     },
     {
       "claim_key": "claims_assistant.scope",
@@ -169,7 +169,7 @@
       "status": "owner_reported",
       "external_allowed": true,
       "source_ref": "владелец, 17.10: проект завершён и сдан",
-      "approved_by": null
+      "approved_by": "Sopkas (владелец), 2026-10-17"
     },
     {
       "claim_key": "claims_assistant.monitoring",
@@ -178,7 +178,7 @@
       "status": "owner_reported",
       "external_allowed": true,
       "source_ref": "владелец, 17.10",
-      "approved_by": null
+      "approved_by": "Sopkas (владелец), 2026-10-17"
     },
     {
       "claim_key": "claims_assistant.features",
@@ -187,7 +187,7 @@
       "status": "owner_reported",
       "external_allowed": true,
       "source_ref": "01-company-and-cases.md, кейс 4, целевой функционал; владелец, 17.10: «всё сделано, абсолютно всё, проект сдан»",
-      "approved_by": null
+      "approved_by": "Sopkas (владелец), 2026-10-17"
     }
   ]
 }
