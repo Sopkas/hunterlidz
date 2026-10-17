@@ -196,7 +196,9 @@ CREATE TABLE leads (
     loss_reason text,
     version integer NOT NULL DEFAULT 1 CHECK (version >= 1),
     created_at timestamptz NOT NULL DEFAULT now(),
-    updated_at timestamptz NOT NULL DEFAULT now()
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    -- Domain contract S1-05: a loss reason exactly for LOST, and never a blank one.
+    CHECK ((stage = 'LOST') = (loss_reason IS NOT NULL AND btrim(loss_reason) <> ''))
 );
 
 -- Doc 10: one active opportunity per company and campaign; closed ones stay as history.

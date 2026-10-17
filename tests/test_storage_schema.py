@@ -156,7 +156,9 @@ def _with_value(db, table: str, column: str, value: str) -> None:
                 else {column: value}
             ),
         ),
-        "leads": lambda: lead(db, comp, camp, **{column: value}),
+        "leads": lambda: lead(
+            db, comp, camp, **{column: value}, **({"loss_reason": "r"} if value == "LOST" else {})
+        ),
     }
     rows[table]()
 
@@ -278,6 +280,20 @@ def test_one_active_lead_per_company_and_campaign(db):
     lead(db, comp, campaign(db))  # another campaign is another opportunity
     db.execute(text("UPDATE leads SET stage = 'WON' WHERE id = :id"), {"id": first})
     lead(db, comp, camp)  # the closed one stays as history
+
+
+@pytest.mark.parametrize(
+    ("stage", "loss_reason"),
+    [("LOST", None), ("LOST", "  "), ("NEW", "нет бюджета"), ("WON", "нет бюджета")],
+)
+def test_loss_reason_is_set_exactly_for_lost(db, stage, loss_reason):
+    # Review A on #14: the S1-05 invariant of Lead is held by the database too.
+    with pytest.raises(IntegrityError), db.begin_nested():
+        lead(db, company(db), campaign(db), stage=stage, loss_reason=loss_reason)
+
+
+def test_lost_lead_keeps_its_reason(db):
+    lead(db, company(db), campaign(db), stage="LOST", loss_reason="нет бюджета")
 
 
 def test_contact_address_is_unique_per_channel(db):
