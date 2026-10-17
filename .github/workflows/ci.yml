@@ -18,10 +18,31 @@ jobs:
         include:
           - os: ubuntu-latest
             python: "3.12"
+            database_url: postgresql://hunter:hunter@localhost:5432/hunter
           - os: ubuntu-latest
             python: "3.14"
+            database_url: postgresql://hunter:hunter@localhost:5432/hunter
+          # Service containers run on Linux runners only: storage tests are skipped here
+          # (ADR-0003); the driver import and the network guard are still tested.
           - os: windows-latest
             python: "3.13"
+    services:
+      postgres:
+        # An empty image skips the service: the Windows job runs without a database.
+        image: ${{ matrix.database_url && 'postgres:18.6-alpine' || '' }}
+        env:
+          POSTGRES_USER: hunter
+          POSTGRES_PASSWORD: hunter
+          POSTGRES_DB: hunter
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U hunter -d hunter"
+          --health-interval 2s --health-timeout 5s --health-retries 30
+    env:
+      HUNTER_TEST_DATABASE_URL: ${{ matrix.database_url }}
+      # Where the database is provided, a storage test that skips is a broken setup.
+      HUNTER_TEST_DATABASE_REQUIRED: ${{ matrix.database_url && '1' || '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

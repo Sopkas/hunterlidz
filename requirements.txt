@@ -1,4 +1,15 @@
 # Runtime dependencies, pinned to exact versions. New ones go through the zone A coordinator.
 # publicsuffixlist: company key by the public suffix list, list bundled, no network (S1-09).
-# The database driver and migrations arrive with S1-06.
 publicsuffixlist==1.1.0.20261010
+# PostgreSQL: SQLAlchemy Core, Alembic migrations, psycopg 3 with bundled libpq (ADR-0003, S1-06).
+SQLAlchemy==2.0.54
+alembic==1.20.0
+psycopg==3.3.6
+psycopg-binary==3.3.6
+# Pulled in by the above, pinned so that an install is the same everywhere.
+Mako==1.4.3
+MarkupSafe==3.0.4
+typing_extensions==4.16.0
+tzdata==2026.5; sys_platform == "win32"
+# SQLAlchemy needs greenlet only on these machines (its own marker); not on macOS arm64.
+greenlet==3.5.6; platform_machine == "aarch64" or platform_machine == "ppc64le" or platform_machine == "x86_64" or platform_machine == "amd64" or platform_machine == "AMD64" or platform_machine == "win32" or platform_machine == "WIN32"
