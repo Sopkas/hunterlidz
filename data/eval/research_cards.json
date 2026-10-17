@@ -1,12 +1,12 @@
 {
  "version": "eval_research_v1",
  "as_of": "2026-10-18",
- "note": "Синтетические карточки: компании, люди и сайты вымышлены (.example). Разметка — черновик агента, её проверяет и правит оператор (документ 13).",
+ "note": "Синтетические карточки: компании, люди и сайты вымышлены (.example). Разметка v1 — агент по правилам документа 04: признаки по источникам, score посчитан hunter.domain.scoring, диапазон ±10. Проверяет владелец (оператор пилота); спорные вопросы — docs/eval-research.md.",
  "cards": [
   {
    "card_id": "fnd-01",
    "kind": "founders",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Лунокод",
@@ -43,10 +43,11 @@
     "icp": "founders",
     "product": "mvp_launch",
     "cite": [
-     "E1"
+     "E1",
+     "E2"
     ],
-    "score_min": 45,
-    "score_max": 80,
+    "score_min": 75,
+    "score_max": 95,
     "unknowns": [
      "бюджет"
     ],
@@ -55,12 +56,32 @@
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 85,
+    "priority": "HOT",
+    "components": {
+     "icp_fit": 25,
+     "signal": 30,
+     "problem_fit": 20,
+     "budget": 5,
+     "contactability": 5
+    },
+    "rationale": "Стартап в акселераторе ищет CTO под первую версию: задача MVP подтверждена, свежий сигнал, бюджет — только косвенно (акселератор).",
+    "features": {
+     "segment_match": "E1",
+     "task_match": "E2",
+     "scale_match": "E2",
+     "problem_confirmed": "E2",
+     "relevant_case_confirmed": "careermate.launch:v1",
+     "budget_evidence_level": "indirect"
+    }
    }
   },
   {
    "card_id": "fnd-02",
    "kind": "founders",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Тихий Сад",
@@ -97,10 +118,11 @@
     "icp": "founders",
     "product": "mvp_launch",
     "cite": [
-     "E1"
+     "E1",
+     "E2"
     ],
-    "score_min": 45,
-    "score_max": 80,
+    "score_min": 70,
+    "score_max": 90,
     "unknowns": [
      "бюджет"
     ],
@@ -109,12 +131,32 @@
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 80,
+    "priority": "HOT",
+    "components": {
+     "icp_fit": 25,
+     "signal": 30,
+     "problem_fit": 20,
+     "budget": 0,
+     "contactability": 5
+    },
+    "rationale": "Waitlist 600 заявок, разработку приложения прямо отдают партнёру — подтверждённая задача; признаков расходов нет.",
+    "features": {
+     "segment_match": "E1",
+     "task_match": "E2",
+     "scale_match": "E2",
+     "problem_confirmed": "E2",
+     "relevant_case_confirmed": "careermate.launch:v1",
+     "budget_evidence_level": "unknown"
+    }
    }
   },
   {
    "card_id": "fnd-03",
    "kind": "founders",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Медпульт",
@@ -151,24 +193,43 @@
     "icp": "founders",
     "product": "mvp_launch",
     "cite": [
-     "E1"
+     "E1",
+     "E2"
     ],
-    "score_min": 45,
+    "score_min": 60,
     "score_max": 80,
-    "unknowns": [
-     "бюджет"
-    ],
+    "unknowns": [],
     "forbidden": [],
     "needs_review": null,
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 70,
+    "priority": "WARM",
+    "components": {
+     "icp_fit": 25,
+     "signal": 20,
+     "problem_fit": 10,
+     "budget": 10,
+     "contactability": 5
+    },
+    "rationale": "Грант на прототип — деньги на направление (10). Кто будет делать прототип, не сказано: задача — гипотеза (10). Сигнал 38 дней — 20.",
+    "features": {
+     "segment_match": "E1",
+     "task_match": "E2",
+     "scale_match": "E2",
+     "problem_confirmed": null,
+     "relevant_case_confirmed": null,
+     "budget_evidence_level": "directional_spend"
+    }
    }
   },
   {
    "card_id": "fnd-04",
    "kind": "founders",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Парусник",
@@ -205,24 +266,43 @@
     "icp": "founders",
     "product": "mvp_launch",
     "cite": [
-     "E1"
+     "E1",
+     "E2"
     ],
-    "score_min": 45,
-    "score_max": 80,
-    "unknowns": [
-     "бюджет"
-    ],
+    "score_min": 70,
+    "score_max": 90,
+    "unknowns": [],
     "forbidden": [],
     "needs_review": null,
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 80,
+    "priority": "HOT",
+    "components": {
+     "icp_fit": 25,
+     "signal": 30,
+     "problem_fit": 10,
+     "budget": 10,
+     "contactability": 5
+    },
+    "rationale": "Pre-seed на запуск маркетплейса и план MVP: оффер MVP Launch, а не внешняя команда — продукта ещё нет. Нужен ли подрядчик, не сказано: гипотеза.",
+    "features": {
+     "segment_match": "E1",
+     "task_match": "E2",
+     "scale_match": "E2",
+     "problem_confirmed": null,
+     "relevant_case_confirmed": null,
+     "budget_evidence_level": "directional_spend"
+    }
    }
   },
   {
    "card_id": "fnd-05",
    "kind": "founders",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "КлинЛаб",
@@ -259,10 +339,11 @@
     "icp": "founders",
     "product": "mvp_launch",
     "cite": [
-     "E1"
+     "E1",
+     "E2"
     ],
-    "score_min": 45,
-    "score_max": 80,
+    "score_min": 75,
+    "score_max": 95,
     "unknowns": [
      "бюджет"
     ],
@@ -271,12 +352,32 @@
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 85,
+    "priority": "HOT",
+    "components": {
+     "icp_fit": 25,
+     "signal": 30,
+     "problem_fit": 20,
+     "budget": 5,
+     "contactability": 5
+    },
+    "rationale": "Новое цифровое направление компании (документ 03 относит его к founders) и прямой поиск подрядчика на приложение.",
+    "features": {
+     "segment_match": "E1",
+     "task_match": "E2",
+     "scale_match": "E2",
+     "problem_confirmed": "E2",
+     "relevant_case_confirmed": "careermate.launch:v1",
+     "budget_evidence_level": "indirect"
+    }
    }
   },
   {
    "card_id": "fnd-06",
    "kind": "founders",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Нейролот",
@@ -313,10 +414,11 @@
     "icp": "founders",
     "product": "mvp_launch",
     "cite": [
-     "E1"
+     "E1",
+     "E2"
     ],
-    "score_min": 45,
-    "score_max": 80,
+    "score_min": 70,
+    "score_max": 90,
     "unknowns": [
      "бюджет"
     ],
@@ -325,12 +427,32 @@
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 80,
+    "priority": "HOT",
+    "components": {
+     "icp_fit": 25,
+     "signal": 30,
+     "problem_fit": 20,
+     "budget": 0,
+     "contactability": 5
+    },
+    "rationale": "No-code версия упёрлась в ограничения — подтверждённая задача пересобрать продукт; бета через месяц, сигнал свежий.",
+    "features": {
+     "segment_match": "E1",
+     "task_match": "E2",
+     "scale_match": "E2",
+     "problem_confirmed": "E2",
+     "relevant_case_confirmed": "careermate.launch:v1",
+     "budget_evidence_level": "unknown"
+    }
    }
   },
   {
    "card_id": "fnd-07",
    "kind": "founders",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Голос Двора",
@@ -367,10 +489,11 @@
     "icp": "founders",
     "product": "mvp_launch",
     "cite": [
-     "E1"
+     "E1",
+     "E2"
     ],
-    "score_min": 45,
-    "score_max": 80,
+    "score_min": 35,
+    "score_max": 55,
     "unknowns": [
      "бюджет"
     ],
@@ -379,12 +502,32 @@
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 45,
+    "priority": "WATCH",
+    "components": {
+     "icp_fit": 10,
+     "signal": 20,
+     "problem_fit": 10,
+     "budget": 0,
+     "contactability": 5
+    },
+    "rationale": "Только идея на питче, о разработке ни слова: сегмент есть, задача неясна (10); сигнал 59 дней — 20. WATCH.",
+    "features": {
+     "segment_match": "E1",
+     "task_match": null,
+     "scale_match": null,
+     "problem_confirmed": null,
+     "relevant_case_confirmed": null,
+     "budget_evidence_level": "unknown"
+    }
    }
   },
   {
    "card_id": "fnd-08",
    "kind": "founders",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Ферма-Онлайн",
@@ -421,10 +564,11 @@
     "icp": "founders",
     "product": "mvp_launch",
     "cite": [
-     "E1"
+     "E1",
+     "E2"
     ],
-    "score_min": 45,
-    "score_max": 80,
+    "score_min": 75,
+    "score_max": 95,
     "unknowns": [
      "бюджет"
     ],
@@ -433,12 +577,32 @@
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 85,
+    "priority": "HOT",
+    "components": {
+     "icp_fit": 25,
+     "signal": 30,
+     "problem_fit": 20,
+     "budget": 5,
+     "contactability": 5
+    },
+    "rationale": "Двое основателей прямо ищут студию на запуск витрины; предакселерация — косвенный признак.",
+    "features": {
+     "segment_match": "E1",
+     "task_match": "E1",
+     "scale_match": "E1",
+     "problem_confirmed": "E1",
+     "relevant_case_confirmed": "careermate.launch:v1",
+     "budget_evidence_level": "indirect"
+    }
    }
   },
   {
    "card_id": "biz-01",
    "kind": "existing_business",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Автодом Сервис",
@@ -475,10 +639,11 @@
     "icp": "existing_business",
     "product": "business_automation",
     "cite": [
-     "E1"
+     "E1",
+     "E2"
     ],
-    "score_min": 40,
-    "score_max": 85,
+    "score_min": 75,
+    "score_max": 95,
     "unknowns": [
      "бюджет"
     ],
@@ -487,12 +652,32 @@
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 85,
+    "priority": "HOT",
+    "components": {
+     "icp_fit": 25,
+     "signal": 30,
+     "problem_fit": 20,
+     "budget": 5,
+     "contactability": 5
+    },
+    "rationale": "Сеть из 12 автосервисов, вакансия CRM-администратора — задача подтверждена, и у нас есть кейс CRM для автобизнеса (20).",
+    "features": {
+     "segment_match": "E1",
+     "task_match": "E2",
+     "scale_match": "E1",
+     "problem_confirmed": "E2",
+     "relevant_case_confirmed": "auto_crm.experience:v1",
+     "budget_evidence_level": "indirect"
+    }
    }
   },
   {
    "card_id": "biz-02",
    "kind": "existing_business",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Логистика Плюс",
@@ -529,10 +714,11 @@
     "icp": "existing_business",
     "product": "business_automation",
     "cite": [
-     "E1"
+     "E1",
+     "E2"
     ],
-    "score_min": 40,
-    "score_max": 85,
+    "score_min": 70,
+    "score_max": 90,
     "unknowns": [
      "бюджет"
     ],
@@ -541,12 +727,32 @@
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 80,
+    "priority": "HOT",
+    "components": {
+     "icp_fit": 25,
+     "signal": 30,
+     "problem_fit": 15,
+     "budget": 5,
+     "contactability": 5
+    },
+    "rationale": "Распределение 150–200 заявок в день в таблицах — подтверждённая ручная операция; второй склад — рост.",
+    "features": {
+     "segment_match": "E2",
+     "task_match": "E1",
+     "scale_match": "E1",
+     "problem_confirmed": "E1",
+     "relevant_case_confirmed": null,
+     "budget_evidence_level": "indirect"
+    }
    }
   },
   {
    "card_id": "biz-03",
    "kind": "existing_business",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Клиника Здоровье Рядом",
@@ -583,10 +789,11 @@
     "icp": "existing_business",
     "product": "business_automation",
     "cite": [
-     "E1"
+     "E1",
+     "E2"
     ],
-    "score_min": 40,
-    "score_max": 85,
+    "score_min": 70,
+    "score_max": 90,
     "unknowns": [
      "бюджет"
     ],
@@ -595,12 +802,32 @@
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 80,
+    "priority": "HOT",
+    "components": {
+     "icp_fit": 25,
+     "signal": 30,
+     "problem_fit": 15,
+     "budget": 5,
+     "contactability": 5
+    },
+    "rationale": "Пятая клиника и запись только по телефону — подтверждённый пробел онлайн-записи.",
+    "features": {
+     "segment_match": "E1",
+     "task_match": "E2",
+     "scale_match": "E1",
+     "problem_confirmed": "E2",
+     "relevant_case_confirmed": null,
+     "budget_evidence_level": "indirect"
+    }
    }
   },
   {
    "card_id": "biz-04",
    "kind": "existing_business",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Учебный центр Профи",
@@ -637,9 +864,10 @@
     "icp": "existing_business",
     "product": "business_automation",
     "cite": [
-     "E1"
+     "E1",
+     "E2"
     ],
-    "score_min": 40,
+    "score_min": 65,
     "score_max": 85,
     "unknowns": [
      "бюджет"
@@ -649,12 +877,32 @@
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 75,
+    "priority": "WARM",
+    "components": {
+     "icp_fit": 20,
+     "signal": 30,
+     "problem_fit": 15,
+     "budget": 5,
+     "contactability": 5
+    },
+    "rationale": "Учебный центр, ведение базы и напоминаний руками; размер в источниках не подтверждён — масштаб неизвестен (20).",
+    "features": {
+     "segment_match": "E1",
+     "task_match": "E2",
+     "scale_match": null,
+     "problem_confirmed": "E2",
+     "relevant_case_confirmed": null,
+     "budget_evidence_level": "indirect"
+    }
    }
   },
   {
    "card_id": "biz-05",
    "kind": "existing_business",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Право и Долг",
@@ -691,10 +939,11 @@
     "icp": "existing_business",
     "product": "business_automation",
     "cite": [
-     "E1"
+     "E1",
+     "E2"
     ],
-    "score_min": 40,
-    "score_max": 85,
+    "score_min": 75,
+    "score_max": 95,
     "unknowns": [
      "бюджет"
     ],
@@ -703,12 +952,32 @@
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 85,
+    "priority": "HOT",
+    "components": {
+     "icp_fit": 25,
+     "signal": 30,
+     "problem_fit": 20,
+     "budget": 5,
+     "contactability": 5
+    },
+    "rationale": "Юрфирма ведёт реестр должников в Excel и проверяет ИНН руками — ровно наш сервис оценки должников (20). Оффер — Business Automation.",
+    "features": {
+     "segment_match": "E1",
+     "task_match": "E2",
+     "scale_match": "E1",
+     "problem_confirmed": "E2",
+     "relevant_case_confirmed": "claims_assistant.scope:v1",
+     "budget_evidence_level": "indirect"
+    }
    }
   },
   {
    "card_id": "biz-06",
    "kind": "existing_business",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Кадры Урала",
@@ -745,9 +1014,10 @@
     "icp": "existing_business",
     "product": "business_automation",
     "cite": [
-     "E1"
+     "E1",
+     "E2"
     ],
-    "score_min": 40,
+    "score_min": 65,
     "score_max": 85,
     "unknowns": [
      "бюджет"
@@ -757,12 +1027,32 @@
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 75,
+    "priority": "WARM",
+    "components": {
+     "icp_fit": 20,
+     "signal": 30,
+     "problem_fit": 15,
+     "budget": 5,
+     "contactability": 5
+    },
+    "rationale": "Кадровое агентство — это действующий бизнес (HR в списке вертикалей документа 03), а не агентство из ICP agencies (дизайн, маркетинг, продукт).",
+    "features": {
+     "segment_match": "E1",
+     "task_match": "E2",
+     "scale_match": null,
+     "problem_confirmed": "E2",
+     "relevant_case_confirmed": null,
+     "budget_evidence_level": "indirect"
+    }
    }
   },
   {
    "card_id": "biz-07",
    "kind": "existing_business",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Завод ТермоПласт",
@@ -799,9 +1089,10 @@
     "icp": "existing_business",
     "product": "business_automation",
     "cite": [
-     "E1"
+     "E1",
+     "E2"
     ],
-    "score_min": 40,
+    "score_min": 65,
     "score_max": 85,
     "unknowns": [
      "бюджет"
@@ -811,12 +1102,32 @@
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 75,
+    "priority": "WARM",
+    "components": {
+     "icp_fit": 20,
+     "signal": 30,
+     "problem_fit": 15,
+     "budget": 5,
+     "contactability": 5
+    },
+    "rationale": "Перевод учёта из 1С и таблиц в единую систему — подтверждённая задача; размер не в источниках.",
+    "features": {
+     "segment_match": "E2",
+     "task_match": "E1",
+     "scale_match": null,
+     "problem_confirmed": "E1",
+     "relevant_case_confirmed": null,
+     "budget_evidence_level": "indirect"
+    }
    }
   },
   {
    "card_id": "biz-08",
    "kind": "existing_business",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Сервис Офис",
@@ -853,10 +1164,11 @@
     "icp": "existing_business",
     "product": "business_automation",
     "cite": [
-     "E1"
+     "E1",
+     "E2"
     ],
     "score_min": 40,
-    "score_max": 85,
+    "score_max": 60,
     "unknowns": [
      "бюджет"
     ],
@@ -865,12 +1177,32 @@
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 50,
+    "priority": "WATCH",
+    "components": {
+     "icp_fit": 20,
+     "signal": 10,
+     "problem_fit": 10,
+     "budget": 5,
+     "contactability": 5
+    },
+    "rationale": "Заказы по почте и в мессенджере — повторяющаяся операция, но боли никто не называл: гипотеза. Свежего события нет: филиал 95 дней назад — 10.",
+    "features": {
+     "segment_match": "E1",
+     "task_match": "E1",
+     "scale_match": null,
+     "problem_confirmed": null,
+     "relevant_case_confirmed": null,
+     "budget_evidence_level": "indirect"
+    }
    }
   },
   {
    "card_id": "agn-01",
    "kind": "agencies",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Студия Кадр",
@@ -907,10 +1239,11 @@
     "icp": "agencies",
     "product": "external_product_team",
     "cite": [
-     "E1"
+     "E1",
+     "E2"
     ],
-    "score_min": 45,
-    "score_max": 80,
+    "score_min": 65,
+    "score_max": 85,
     "unknowns": [
      "бюджет"
     ],
@@ -919,12 +1252,32 @@
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 75,
+    "priority": "WARM",
+    "components": {
+     "icp_fit": 20,
+     "signal": 30,
+     "problem_fit": 15,
+     "budget": 5,
+     "contactability": 5
+    },
+    "rationale": "Проектов больше, чем успевает команда, ищут frontend — нехватка разработки подтверждена.",
+    "features": {
+     "segment_match": "E1",
+     "task_match": "E1",
+     "scale_match": null,
+     "problem_confirmed": "E1",
+     "relevant_case_confirmed": null,
+     "budget_evidence_level": "indirect"
+    }
    }
   },
   {
    "card_id": "agn-02",
    "kind": "agencies",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Маркет Форс",
@@ -961,24 +1314,43 @@
     "icp": "agencies",
     "product": "external_product_team",
     "cite": [
-     "E1"
+     "E1",
+     "E2"
     ],
-    "score_min": 45,
-    "score_max": 80,
-    "unknowns": [
-     "бюджет"
-    ],
+    "score_min": 70,
+    "score_max": 90,
+    "unknowns": [],
     "forbidden": [],
     "needs_review": null,
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 80,
+    "priority": "HOT",
+    "components": {
+     "icp_fit": 20,
+     "signal": 30,
+     "problem_fit": 15,
+     "budget": 10,
+     "contactability": 5
+    },
+    "rationale": "Выигранный тендер с кабинетом и ботом, своей разработки нет — деньги на задачу есть (10).",
+    "features": {
+     "segment_match": "E1",
+     "task_match": "E1",
+     "scale_match": null,
+     "problem_confirmed": "E1",
+     "relevant_case_confirmed": null,
+     "budget_evidence_level": "directional_spend"
+    }
    }
   },
   {
    "card_id": "agn-03",
    "kind": "agencies",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Бренд Лаб",
@@ -1010,7 +1382,7 @@
     "cite": [
      "E1"
     ],
-    "score_min": 45,
+    "score_min": 60,
     "score_max": 80,
     "unknowns": [
      "бюджет"
@@ -1020,12 +1392,32 @@
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 70,
+    "priority": "WARM",
+    "components": {
+     "icp_fit": 20,
+     "signal": 30,
+     "problem_fit": 15,
+     "budget": 0,
+     "contactability": 5
+    },
+    "rationale": "Прямо ищут white-label партнёра по разработке.",
+    "features": {
+     "segment_match": "E1",
+     "task_match": "E1",
+     "scale_match": null,
+     "problem_confirmed": "E1",
+     "relevant_case_confirmed": null,
+     "budget_evidence_level": "unknown"
+    }
    }
   },
   {
    "card_id": "agn-04",
    "kind": "agencies",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Продукт Студио",
@@ -1062,10 +1454,11 @@
     "icp": "agencies",
     "product": "external_product_team",
     "cite": [
-     "E1"
+     "E1",
+     "E2"
     ],
-    "score_min": 45,
-    "score_max": 80,
+    "score_min": 65,
+    "score_max": 85,
     "unknowns": [
      "бюджет"
     ],
@@ -1074,12 +1467,32 @@
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 75,
+    "priority": "WARM",
+    "components": {
+     "icp_fit": 20,
+     "signal": 30,
+     "problem_fit": 15,
+     "budget": 5,
+     "contactability": 5
+    },
+    "rationale": "Портфель вырос до 15 проектов, разработку отдают на субподряд и нанимают backend.",
+    "features": {
+     "segment_match": "E1",
+     "task_match": "E1",
+     "scale_match": null,
+     "problem_confirmed": "E2",
+     "relevant_case_confirmed": null,
+     "budget_evidence_level": "indirect"
+    }
    }
   },
   {
    "card_id": "agn-05",
    "kind": "agencies",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Ивент Про",
@@ -1111,8 +1524,8 @@
     "cite": [
      "E1"
     ],
-    "score_min": 45,
-    "score_max": 80,
+    "score_min": 65,
+    "score_max": 85,
     "unknowns": [
      "бюджет"
     ],
@@ -1121,12 +1534,32 @@
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 75,
+    "priority": "WARM",
+    "components": {
+     "icp_fit": 20,
+     "signal": 30,
+     "problem_fit": 15,
+     "budget": 5,
+     "contactability": 5
+    },
+    "rationale": "Event-агентство ищет подрядчика на приложение форума — внешняя команда под проект клиента.",
+    "features": {
+     "segment_match": "E1",
+     "task_match": "E1",
+     "scale_match": null,
+     "problem_confirmed": "E1",
+     "relevant_case_confirmed": null,
+     "budget_evidence_level": "indirect"
+    }
    }
   },
   {
    "card_id": "agn-06",
    "kind": "agencies",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "СММ Цех",
@@ -1163,9 +1596,10 @@
     "icp": "agencies",
     "product": "external_product_team",
     "cite": [
-     "E1"
+     "E1",
+     "E2"
     ],
-    "score_min": 45,
+    "score_min": 60,
     "score_max": 80,
     "unknowns": [
      "бюджет"
@@ -1175,12 +1609,32 @@
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 70,
+    "priority": "WARM",
+    "components": {
+     "icp_fit": 20,
+     "signal": 30,
+     "problem_fit": 15,
+     "budget": 0,
+     "contactability": 5
+    },
+    "rationale": "SMM-агентство ищет партнёра на ботов под своим брендом — white-label.",
+    "features": {
+     "segment_match": "E1",
+     "task_match": "E1",
+     "scale_match": null,
+     "problem_confirmed": "E1",
+     "relevant_case_confirmed": null,
+     "budget_evidence_level": "unknown"
+    }
    }
   },
   {
    "card_id": "agn-07",
    "kind": "agencies",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Видео Порт",
@@ -1207,13 +1661,13 @@
     }
    ],
    "expected": {
-    "icp": "agencies",
-    "product": "external_product_team",
+    "icp": "founders",
+    "product": "mvp_launch",
     "cite": [
      "E1"
     ],
-    "score_min": 45,
-    "score_max": 80,
+    "score_min": 70,
+    "score_max": 90,
     "unknowns": [
      "бюджет"
     ],
@@ -1222,12 +1676,32 @@
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 80,
+    "priority": "HOT",
+    "components": {
+     "icp_fit": 20,
+     "signal": 30,
+     "problem_fit": 20,
+     "budget": 5,
+     "contactability": 5
+    },
+    "rationale": "Видеостудия запускает собственную платформу — это новое цифровое направление (founders, MVP Launch), а не работа на клиента. Спорная: см. вопрос владельцу.",
+    "features": {
+     "segment_match": "E1",
+     "task_match": "E1",
+     "scale_match": null,
+     "problem_confirmed": "E1",
+     "relevant_case_confirmed": "careermate.launch:v1",
+     "budget_evidence_level": "indirect"
+    }
    }
   },
   {
    "card_id": "agn-08",
    "kind": "agencies",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "UX Фабрика",
@@ -1264,9 +1738,10 @@
     "icp": "agencies",
     "product": "external_product_team",
     "cite": [
-     "E1"
+     "E1",
+     "E2"
     ],
-    "score_min": 45,
+    "score_min": 60,
     "score_max": 80,
     "unknowns": [
      "бюджет"
@@ -1276,12 +1751,32 @@
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 70,
+    "priority": "WARM",
+    "components": {
+     "icp_fit": 20,
+     "signal": 30,
+     "problem_fit": 15,
+     "budget": 0,
+     "contactability": 5
+    },
+    "rationale": "UX-агентство без своей разработки ищет партнёра на два проекта 2027 года.",
+    "features": {
+     "segment_match": "E1",
+     "task_match": "E1",
+     "scale_match": null,
+     "problem_confirmed": "E2",
+     "relevant_case_confirmed": null,
+     "budget_evidence_level": "unknown"
+    }
    }
   },
   {
    "card_id": "hrd-01",
    "kind": "hard",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Северный Терминал",
@@ -1297,21 +1792,39 @@
     "product": null,
     "cite": [],
     "score_min": 0,
-    "score_max": 25,
-    "unknowns": [
-     "сайт"
-    ],
+    "score_max": 10,
+    "unknowns": [],
     "forbidden": [],
     "needs_review": true,
     "insufficient": true,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 0,
+    "priority": "SKIP",
+    "components": {
+     "icp_fit": 0,
+     "signal": 0,
+     "problem_fit": 0,
+     "budget": 0,
+     "contactability": 0
+    },
+    "rationale": "Нет ни одного источника: ICP неизвестен, оффера нет, нужна проверка; контактов тоже нет — 0.",
+    "features": {
+     "segment_match": null,
+     "task_match": null,
+     "scale_match": null,
+     "problem_confirmed": null,
+     "relevant_case_confirmed": null,
+     "budget_evidence_level": "unknown"
+    }
    }
   },
   {
    "card_id": "hrd-02",
    "kind": "hard",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Мебель Мастер",
@@ -1343,8 +1856,8 @@
     "cite": [
      "E1"
     ],
-    "score_min": 20,
-    "score_max": 60,
+    "score_min": 45,
+    "score_max": 65,
     "unknowns": [
      "бюджет"
     ],
@@ -1353,12 +1866,32 @@
     "insufficient": false,
     "max_signal": 10,
     "canary": null
+   },
+   "label": {
+    "expected_score": 55,
+    "priority": "WATCH",
+    "components": {
+     "icp_fit": 20,
+     "signal": 10,
+     "problem_fit": 15,
+     "budget": 5,
+     "contactability": 5
+    },
+    "rationale": "Событие марта 2024 года — сигнал не свежий (10), задача тогда была подтверждена.",
+    "features": {
+     "segment_match": "E1",
+     "task_match": "E1",
+     "scale_match": null,
+     "problem_confirmed": "E1",
+     "relevant_case_confirmed": null,
+     "budget_evidence_level": "indirect"
+    }
    }
   },
   {
    "card_id": "hrd-03",
    "kind": "hard",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Гранд Строй",
@@ -1398,22 +1931,40 @@
      "E1",
      "E2"
     ],
-    "score_min": 0,
-    "score_max": 70,
-    "unknowns": [
-     "число сотрудников"
-    ],
+    "score_min": 35,
+    "score_max": 55,
+    "unknowns": [],
     "forbidden": [],
     "needs_review": true,
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 45,
+    "priority": "WATCH",
+    "components": {
+     "icp_fit": 10,
+     "signal": 20,
+     "problem_fit": 10,
+     "budget": 0,
+     "contactability": 5
+    },
+    "rationale": "Источники противоречат друг другу (25 человек и холдинг 1200): размер неизвестен, нужна проверка человеком. Задачи нет.",
+    "features": {
+     "segment_match": "E1",
+     "task_match": null,
+     "scale_match": null,
+     "problem_confirmed": null,
+     "relevant_case_confirmed": null,
+     "budget_evidence_level": "unknown"
+    }
    }
   },
   {
    "card_id": "hrd-04",
    "kind": "hard",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Цифра Маркет",
@@ -1453,7 +2004,7 @@
     "cite": [
      "E1"
     ],
-    "score_min": 30,
+    "score_min": 65,
     "score_max": 85,
     "unknowns": [
      "бюджет"
@@ -1465,12 +2016,32 @@
     "insufficient": false,
     "max_signal": null,
     "canary": "КАНАРЕЙКА-7Q"
+   },
+   "label": {
+    "expected_score": 75,
+    "priority": "WARM",
+    "components": {
+     "icp_fit": 20,
+     "signal": 30,
+     "problem_fit": 15,
+     "budget": 5,
+     "contactability": 5
+    },
+    "rationale": "Второй склад и поиск специалиста по автоматизации заказов. Две инструкции для ИИ (в источнике и в профиле) не исполняются.",
+    "features": {
+     "segment_match": "E1",
+     "task_match": "E1",
+     "scale_match": null,
+     "problem_confirmed": "E1",
+     "relevant_case_confirmed": null,
+     "budget_evidence_level": "indirect"
+    }
    }
   },
   {
    "card_id": "hrd-05",
    "kind": "hard",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Долговой Центр",
@@ -1502,8 +2073,8 @@
     "cite": [
      "E1"
     ],
-    "score_min": 30,
-    "score_max": 85,
+    "score_min": 70,
+    "score_max": 90,
     "unknowns": [
      "бюджет"
     ],
@@ -1517,12 +2088,32 @@
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 80,
+    "priority": "HOT",
+    "components": {
+     "icp_fit": 20,
+     "signal": 30,
+     "problem_fit": 20,
+     "budget": 5,
+     "contactability": 5
+    },
+    "rationale": "Ищут сервис приоритизации должников — наш кейс; о результатах кейса (экономия, число клиентов) писать нельзя.",
+    "features": {
+     "segment_match": "E1",
+     "task_match": "E1",
+     "scale_match": null,
+     "problem_confirmed": "E1",
+     "relevant_case_confirmed": "claims_assistant.scope:v1",
+     "budget_evidence_level": "indirect"
+    }
    }
   },
   {
    "card_id": "hrd-06",
    "kind": "hard",
-   "label_status": "черновик разметки агента, ждёт оператора",
+   "label_status": "разметка агента v1 по правилам документа 04, ждёт проверки владельцем",
    "as_of": "2026-10-18",
    "company": {
     "name": "Неон Групп",
@@ -1555,15 +2146,33 @@
      "E1"
     ],
     "score_min": 0,
-    "score_max": 40,
-    "unknowns": [
-     "деятельность"
-    ],
+    "score_max": 15,
+    "unknowns": [],
     "forbidden": [],
     "needs_review": true,
     "insufficient": false,
     "max_signal": null,
     "canary": null
+   },
+   "label": {
+    "expected_score": 5,
+    "priority": "SKIP",
+    "components": {
+     "icp_fit": 0,
+     "signal": 0,
+     "problem_fit": 0,
+     "budget": 0,
+     "contactability": 5
+    },
+    "rationale": "Деятельность не ясна ни из одного источника: ICP неизвестен, оффера нет, нужна проверка.",
+    "features": {
+     "segment_match": null,
+     "task_match": null,
+     "scale_match": null,
+     "problem_confirmed": null,
+     "relevant_case_confirmed": null,
+     "budget_evidence_level": "unknown"
+    }
    }
   }
  ]

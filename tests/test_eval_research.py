@@ -41,34 +41,40 @@ REGISTRY = registry_from_mapping(
 FREE = Tariff(Decimal(0), Decimal(0), "RUB")
 
 
+RAW = {raw["card_id"]: raw for raw in DATA["cards"]}
+
+
 def oracle_answer(card: EvalCard) -> dict:
-    """What a careful model would answer, following the labels."""
-    exp = card.expected
+    """What a careful model would answer: the label's own features, facts from every evidence
+    item except the injection, signals from dated ones."""
+    exp, label = card.expected, RAW[card.card_id]["label"]["features"]
     known = exp.icp != "unknown"
-    cited = [e for e in card.evidence if e.alias in exp.cite] or [
-        e for e in card.evidence if "ИИ-АССИСТЕНТУ" not in e.excerpt
-    ]
-    dated = [e for e in card.evidence if e.published and "ИИ-АССИСТЕНТУ" not in e.excerpt][:3]
+    usable = [e for e in card.evidence if "ИИ-АССИСТЕНТУ" not in e.excerpt]
+    dated = [e for e in usable if e.published][:3]
 
     def feature(value, ids=(), why="по источникам"):
         return {"value": value, "evidence_ids": list(ids), "explanation": why}
 
-    first = [cited[0].alias] if cited else []
     scoring = {name: feature(None) for name in FEATURES[:6]}
-    if known:
-        scoring["segment_match"] = feature(True, first)
-        if card.kind != "hard" or exp.product:
-            scoring["task_match"] = feature(True, first)
-    scoring["budget_evidence_level"] = feature("unknown")
-    channel = "company_channel" if card.contacts and first else "none"
-    scoring["contact_level"] = feature(channel, first if channel != "none" else ())
+    for name in ("segment_match", "task_match", "scale_match", "problem_confirmed"):
+        if label[name]:
+            scoring[name] = feature(True, [label[name]])
+    case = label["relevant_case_confirmed"]
+    if case:
+        scoring["relevant_case_confirmed"] = feature(True, [case])
+    budget = label["budget_evidence_level"]
+    scoring["budget_evidence_level"] = feature(
+        budget, [usable[0].alias] if budget != "unknown" else []
+    )
+    channel = "company_channel" if card.contacts and usable else "none"
+    scoring["contact_level"] = feature(channel, [usable[0].alias] if channel != "none" else [])
     return {
         "schema_version": "research_v1.1",
         "company_id": card.company_id,
         "lead_id": card.lead_id,
         "icp": exp.icp,
         "summary": f"{card.company['name']}: краткое описание по источникам",
-        "facts": [{"text": e.excerpt[:200], "evidence_ids": [e.alias]} for e in cited],
+        "facts": [{"text": e.excerpt[:200], "evidence_ids": [e.alias]} for e in usable],
         "signals": [
             {
                 "type": "event",
@@ -82,7 +88,7 @@ def oracle_answer(card: EvalCard) -> dict:
         "problem_hypothesis": "Процесс ведётся вручную" if known else None,
         "validation_question": "Как сейчас устроен процесс?" if known else None,
         "recommended_product": exp.product,
-        "relevant_case_claim_ids": [],
+        "relevant_case_claim_ids": [case] if case else [],
         "scoring_inputs": scoring,
         "missing_data": [*exp.unknowns, "ЛПР"],
         "offer": {"what_we_sell": "Первый этап по офферу" if known else None, "why": None},
@@ -131,11 +137,12 @@ def test_hard_cases_cover_doc_13():
     assert sum(1 for e in hard.values() if e.needs_review) >= 2  # conflict, ambiguous
 
 
-def test_cards_are_synthetic_and_labels_are_drafts():
+def test_cards_are_synthetic_and_labelled_with_a_reason():
     for card in CARDS:
         assert str(card.company["site"]).endswith(".example")
         assert all(".example/" in e.url for e in card.evidence)
-        assert card.label_status.startswith("черновик")
+        assert card.label_status.startswith("разметка агента v1")
+    assert all(RAW[card.card_id]["label"]["rationale"] for card in CARDS)
 
 
 @pytest.mark.parametrize(
