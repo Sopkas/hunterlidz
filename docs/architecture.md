@@ -24,11 +24,7 @@ grep -rnE "^from hunter\.(infrastructure|presentation|runtime)" src/hunter/domai
 grep -rnE "^from hunter\.(infrastructure|runtime)" src/hunter/presentation
 ```
 
-<<<<<<< HEAD
-Общие доменные типы и их инварианты — контракт зон A и B: `docs/domain-contract.md`. Результат исследования и LLM-порт — `docs/research-contract.md`. Сообщения и согласование — `docs/messages-contract.md`.
-=======
-Общие доменные типы и их инварианты — контракт зон A и B: `docs/domain-contract.md`. Результат исследования и LLM-порт — `docs/research-contract.md`. Встречи, КП, заказы и оплаты — `docs/deals-contract.md`.
->>>>>>> origin/main
+Общие доменные типы и их инварианты — контракт зон A и B: `docs/domain-contract.md`. Результат исследования и LLM-порт — `docs/research-contract.md`. Встречи, КП, заказы и оплаты — `docs/deals-contract.md`. Сообщения и согласование — `docs/messages-contract.md`.
 
 ## Принципы
 
