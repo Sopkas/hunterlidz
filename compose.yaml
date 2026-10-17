@@ -1,0 +1,24 @@
+# Local PostgreSQL for development and storage tests (ADR-0003). Not for production.
+# docker compose up -d --wait  → database "hunter" on 127.0.0.1:5432, user and password "hunter".
+services:
+  db:
+    image: postgres:18.6-alpine
+    environment:
+      POSTGRES_USER: hunter
+      POSTGRES_PASSWORD: hunter
+      POSTGRES_DB: hunter
+    # Loopback only, both families: on Windows "localhost" tries ::1 first, and an unbound ::1
+    # hangs until the connect timeout instead of failing over to 127.0.0.1 at once.
+    ports:
+      - "127.0.0.1:5432:5432"
+      - "[::1]:5432:5432"
+    volumes:
+      - hunter-db:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hunter -d hunter"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  hunter-db:
