@@ -34,6 +34,36 @@ def test_password_never_displayed():
     assert safe_database_url(URL) == "postgresql://localhost:5432/hunter"
 
 
+@pytest.mark.parametrize(
+    ("raw", "secret"),
+    [
+        ("postgresql://u:123/x@localhost:5432/hunter", "123/x"),
+        ("postgresql://u:p/ss@localhost:5432/hunter", "p/ss"),
+        ("postgresql://u:s3cret@localhost:99999/hunter", "s3cret"),
+        ("postgresql://u:p?ss@localhost:5432/hunter", "p?ss"),
+        ("postgresql://u:p#ss@localhost:5432/hunter", "p#ss"),
+    ],
+    ids=["slash-numeric", "slash", "bad-port", "question", "hash"],
+)
+def test_unencoded_password_or_bad_port_is_config_error(raw, secret, tmp_path: Path):
+    with pytest.raises(ConfigError, match="HUNTER_DATABASE_URL") as exc:
+        load_settings({"HUNTER_DATABASE_URL": raw}, tmp_path / ".env")
+    assert secret not in str(exc.value)
+
+
+@pytest.mark.parametrize(
+    ("raw", "shown"),
+    [
+        ("postgresql://u:p%2Fss@localhost:5432/hunter", "postgresql://localhost:5432/hunter"),
+        ("postgresql://u:s3cret@[::1]:5432/hunter", "postgresql://[::1]:5432/hunter"),
+    ],
+    ids=["encoded-slash", "ipv6"],
+)
+def test_valid_url_shown_without_password(raw, shown, tmp_path: Path):
+    settings = load_settings({"HUNTER_DATABASE_URL": raw}, tmp_path / ".env")
+    assert safe_database_url(settings.database_url) == shown
+
+
 def test_process_env_wins_over_dotenv(tmp_path: Path):
     dotenv = tmp_path / ".env"
     dotenv.write_text(
@@ -64,7 +94,7 @@ def test_utc_offset(raw, hours):
     assert parse_utc_offset(raw).utcoffset(None) == timedelta(hours=hours)
 
 
-@pytest.mark.parametrize("raw", ["3", "+25:00", "abc"])
+@pytest.mark.parametrize("raw", ["3", "+25:00", "abc", "+03:75", "+03:-5"])
 def test_bad_utc_offset(raw):
     with pytest.raises(ConfigError):
         parse_utc_offset(raw)
