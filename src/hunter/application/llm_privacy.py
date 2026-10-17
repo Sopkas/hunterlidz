@@ -17,8 +17,22 @@ from hunter.application.llm import LlmClient, LlmRequest, LlmResult, Tariff
 EMAIL_MASK = "[e-mail]"
 PHONE_MASK = "[телефон]"
 MESSENGER_MASK = "[мессенджер]"
+PROFILE_MASK = "[профиль]"
 
 _EMAIL = re.compile(r"(?<![\w.+-])[\w.+-]+@[\w-]+(?:\.[\w-]+)+", re.UNICODE)
+# Hidden from address harvesters: ivan [at] alpha.ru, ivan(at)alpha.ru, ivan собака alpha.ru.
+_EMAIL_HIDDEN = re.compile(
+    r"(?<![\w.+-])[\w.+-]+\s*(?:\[at\]|\(at\)|\{at\}|\sсобака\s)\s*[\w-]+"
+    r"(?:\s*(?:\.|\[dot\]|\(dot\)|\sточка\s)\s*[\w-]+)+",
+    re.IGNORECASE,
+)
+# A person's page on a social network; a company page there is masked too, the address of the
+# company is its site.
+_PROFILE = re.compile(
+    r"(?:https?://)?(?:www\.|m\.)?(?:vk\.com|vk\.ru|ok\.ru|instagram\.com|facebook\.com|fb\.com|"
+    r"tenchat\.ru|linkedin\.com/in)/[^\s)\]>,;]+",
+    re.IGNORECASE,
+)
 _MESSENGER_LINK = re.compile(
     r"(?:https?://)?(?:www\.)?(?:t\.me|telegram\.me|telegram\.dog|wa\.me|api\.whatsapp\.com)"
     r"/[^\s)\]>,;]+",
@@ -36,15 +50,23 @@ _PHONE_WRITTEN = re.compile(
 _PHONE_BARE = re.compile(r"(?<![\w+])[78]\d{10}(?!\w)")
 
 
+_THOUSANDS = re.compile(r"\d{1,3}(?:[ \u00a0]\d{3})+")
+
+
 def _mask_written_phone(match: re.Match[str]) -> str:
-    digits = sum(ch.isdigit() for ch in match.group(0))
-    return PHONE_MASK if 10 <= digits <= 21 else match.group(0)
+    text = match.group(0)
+    if _THOUSANDS.fullmatch(text):
+        return text  # 12 000 000 000 — an amount in groups of three, not a phone
+    digits = sum(ch.isdigit() for ch in text)
+    return PHONE_MASK if 10 <= digits <= 21 else text
 
 
 def mask_contacts(text: str) -> str:
     """Replace contact addresses with neutral marks; the rest of the text is unchanged."""
     text = _EMAIL.sub(EMAIL_MASK, text)
+    text = _EMAIL_HIDDEN.sub(EMAIL_MASK, text)
     text = _MESSENGER_LINK.sub(MESSENGER_MASK, text)
+    text = _PROFILE.sub(PROFILE_MASK, text)
     text = _TG_HANDLE.sub(MESSENGER_MASK, text)
     text = _PHONE_WRITTEN.sub(_mask_written_phone, text)
     return _PHONE_BARE.sub(PHONE_MASK, text)
