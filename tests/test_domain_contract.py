@@ -85,18 +85,28 @@ def test_company_minimal_and_frozen():
         {"normalized_domain": "https://test-auto.example"},
         {"normalized_domain": "test-auto.example/path"},
         {"normalized_domain": "localhost"},
+        {"normalized_domain": "пример.рф"},
+        {"normalized_domain": "XN--E1AFMKFD.XN--P1AI"},
+        {"normalized_domain": "www.example.com"},
+        {"normalized_domain": "example.com."},
+        {"id": " "},
         {"size_min": 50, "size_max": 10},
         {"size_min": -1},
         {"industry": ""},
         {"merged_into_id": "c1"},
         {"version": 0},
     ],
-    ids=["blank-name", "upper", "scheme", "path", "no-dot", "sizes", "negative", "blank", "self",
-         "version"],
+    ids=["blank-name", "upper", "scheme", "path", "no-dot", "idn", "upper-punycode", "www",
+         "trailing-dot", "blank-id", "sizes", "negative", "blank", "self", "version"],
 )  # fmt: skip
 def test_company_rejects(kwargs):
     with pytest.raises(ValueError):
         Company(**{"id": "c1", "name": "Тест Авто", **kwargs})
+
+
+@pytest.mark.parametrize("domain", ["example.com", "example.co.uk", "xn--e1afmkfd.xn--p1ai"])
+def test_company_accepts_normalized_domain(domain):
+    assert Company(id="c1", name="Тест", normalized_domain=domain).normalized_domain == domain
 
 
 # --- source and evidence ------------------------------------------------------------------
@@ -160,6 +170,29 @@ def test_evidence_unknown_date_is_none_not_guessed():
 
 
 @pytest.mark.parametrize(
+    ("event_at", "precision"),
+    [
+        (date(2026, 3, 15), DatePrecision.DAY),
+        (date(2026, 3, 1), DatePrecision.MONTH),
+        (date(2026, 1, 1), DatePrecision.YEAR),
+    ],
+    ids=["day", "month", "year"],
+)
+def test_evidence_period_is_stored_as_its_first_day(event_at, precision):
+    fact = Evidence(
+        id="e1",
+        company_id="c1",
+        source_id="s1",
+        claim="Открыт второй филиал",
+        excerpt="Мы открыли второй сервис",
+        observed_at=NOW,
+        event_at=event_at,
+        date_precision=precision,
+    )
+    assert fact.event_at == event_at
+
+
+@pytest.mark.parametrize(
     "kwargs",
     [
         {"event_at": date(2026, 9, 1)},  # date without precision
@@ -167,9 +200,13 @@ def test_evidence_unknown_date_is_none_not_guessed():
         {"excerpt": " "},
         {"claim": ""},
         {"observed_at": NAIVE},
+        {"event_at": date(2026, 3, 15), "date_precision": DatePrecision.MONTH},
+        {"event_at": date(2026, 3, 1), "date_precision": DatePrecision.YEAR},
+        {"source_id": ""},
     ],
-    ids=["date-only", "precision-only", "excerpt", "claim", "naive"],
-)
+    ids=["date-only", "precision-only", "excerpt", "claim", "naive", "month-not-1st",
+         "year-not-jan-1", "blank-source"],
+)  # fmt: skip
 def test_evidence_rejects(kwargs):
     base = {
         "id": "e",

@@ -18,7 +18,6 @@ from hunter.domain.catalog import CLOSED_STAGES, Icp, Priority, Product, Stage
 
 class SourceType(StrEnum):
     WEBSITE = "website"
-    LISTING = "listing"  # marketplace listing; used only if PM accepts ADR-0001 (S1-11)
     CONVERSATION = "conversation"
     MANUAL = "manual"
 
@@ -42,9 +41,12 @@ class DatePrecision(StrEnum):
 
 
 class VerificationStatus(StrEnum):
-    UNVERIFIED = "unverified"  # extracted, not checked by a person
+    """A person's decision on the claim. The code already found the excerpt in the received
+    source before Evidence was created (S2-02, T-06), so this is not a machine check."""
+
+    UNVERIFIED = "unverified"  # not reviewed by a person yet
     VERIFIED = "verified"  # an operator confirmed the excerpt supports the claim
-    REJECTED = "rejected"  # the excerpt does not support the claim
+    REJECTED = "rejected"  # final: never returns, not used in score or draft (S2-08)
 
 
 class Channel(StrEnum):
@@ -52,7 +54,6 @@ class Channel(StrEnum):
     TELEGRAM = "telegram"
     PHONE = "phone"
     WEB = "web"
-    PLATFORM = "platform"  # reply through a marketplace listing
     OTHER = "other"
 
 
@@ -64,6 +65,11 @@ def _utc(value: datetime | None, name: str) -> None:
 def _text(value: str | None, name: str) -> None:
     if value is not None and not value.strip():
         raise ValueError(f"{name} must not be blank; use None when unknown")
+
+
+def _id(value: str, name: str = "id") -> None:
+    if not value.strip():
+        raise ValueError(f"{name} must not be blank")
 
 
 def _version(value: int) -> None:
@@ -84,16 +90,21 @@ class Company:
     merged_into_id: str | None = None
 
     def __post_init__(self) -> None:
+        _id(self.id)
         _version(self.version)
         if not self.name.strip():
             raise ValueError("company name must not be blank")
+        # Form only; company_domain (S1-09) derives the registrable domain in this form.
         domain = self.normalized_domain
         if domain is not None and (
-            domain != domain.lower()
+            not domain.isascii()
+            or domain != domain.lower()
+            or domain.startswith("www.")
+            or domain.endswith(".")
             or "." not in domain
             or any(ch.isspace() or ch in "/:@?#" for ch in domain)
         ):
-            raise ValueError("normalized_domain: lower-case host only, e.g. 'example.com'")
+            raise ValueError("normalized_domain: ASCII registrable domain, e.g. 'example.com'")
         for value, name in ((self.industry, "industry"), (self.location, "location")):
             _text(value, name)
         if any(size is not None and size < 0 for size in (self.size_min, self.size_max)):
@@ -118,6 +129,7 @@ class Source:
     error_code: str | None = None
 
     def __post_init__(self) -> None:
+        _id(self.id)
         parts = urlsplit(self.canonical_url)
         if parts.scheme not in ("http", "https") or not parts.netloc:
             raise ValueError("canonical_url must be an absolute http(s) URL")
@@ -146,11 +158,22 @@ class Evidence:
     verification_status: VerificationStatus = VerificationStatus.UNVERIFIED
 
     def __post_init__(self) -> None:
+        for value, name in (
+            (self.id, "id"),
+            (self.company_id, "company_id"),
+            (self.source_id, "source_id"),
+        ):
+            _id(value, name)
         _utc(self.observed_at, "observed_at")
         if not self.claim.strip() or not self.excerpt.strip():
             raise ValueError("evidence needs a claim and a non-empty excerpt")
         if (self.event_at is None) != (self.date_precision is DatePrecision.UNKNOWN):
             raise ValueError("event_at is None exactly when date_precision is 'unknown'")
+        # One fact, one spelling: a month or a year is stored as its first day (doc 11).
+        if self.date_precision is DatePrecision.MONTH and self.event_at.day != 1:
+            raise ValueError("event_at with month precision is the 1st of the month")
+        if self.date_precision is DatePrecision.YEAR and self.event_at.timetuple().tm_yday != 1:
+            raise ValueError("event_at with year precision is January 1st")
 
 
 @dataclass(frozen=True, slots=True)
@@ -168,6 +191,8 @@ class Contact:
     verified_at: datetime | None = None
 
     def __post_init__(self) -> None:
+        _id(self.id)
+        _id(self.company_id, "company_id")
         _version(self.version)
         if not isinstance(self.channel, Channel):
             raise ValueError("channel must be a Channel")
@@ -199,6 +224,12 @@ class Lead:
     loss_reason: str | None = None
 
     def __post_init__(self) -> None:
+        for value, name in (
+            (self.id, "id"),
+            (self.company_id, "company_id"),
+            (self.campaign_id, "campaign_id"),
+        ):
+            _id(value, name)
         _version(self.version)
         if not isinstance(self.stage, Stage):
             raise ValueError("stage must be a CRM Stage, not a priority or message status")
