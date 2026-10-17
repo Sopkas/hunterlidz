@@ -36,7 +36,19 @@ python -m hunter config
 
 Если PowerShell запрещает запуск `Activate.ps1`, выполните один раз `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
 
-Без `HUNTER_DATABASE_URL` команда завершается с кодом 2 и понятным сообщением до любых сетевых вызовов. Пароль из адреса базы на экран не выводится. До S1-06 значение проверяется, но не используется: базы ещё нет.
+Без `HUNTER_DATABASE_URL` команда завершается с кодом 2 и понятным сообщением до любых сетевых вызовов. Пароль из адреса базы на экран не выводится. Пока значение только проверяется: таблицы и миграции появятся в S1-07.
+
+## База
+
+PostgreSQL для разработки и тестов поднимается в Docker (нужен Docker Desktop или Docker Engine с Compose). Команда одна для всех ОС:
+
+```bash
+docker compose up -d --wait     # база hunter на 127.0.0.1:5432, готова, когда команда вернулась
+```
+
+В `.env`: `HUNTER_DATABASE_URL=postgresql://hunter:hunter@localhost:5432/hunter`. Порт открыт только на этой машине. Пароль известен всем — это база для разработки, не для прода.
+
+Остановить — `docker compose down`, удалить вместе с данными и начать с нуля — `docker compose down -v`. Почему PostgreSQL, SQLAlchemy Core и Alembic — `docs/adr/0003-postgresql-sqlalchemy-alembic.md`.
 
 ## Проверки (то же, что в CI)
 
@@ -46,7 +58,16 @@ python -m ruff check src tests
 python -m ruff format --check src tests
 ```
 
-Тесты не ходят в сеть: любое соединение дальше loopback роняет тест (`tests/conftest.py`). У каждого теста таймаут 10 с.
+Тесты не ходят в сеть: любое соединение дальше loopback роняет тест, в том числе соединение PostgreSQL (`tests/conftest.py`). У каждого теста таймаут 10 с.
+
+Тесты хранилища берут базу из `HUNTER_TEST_DATABASE_URL`. Без переменной они пропускаются, и в итоге pytest видно `skipped`. С базой из compose:
+
+```bash
+HUNTER_TEST_DATABASE_URL=postgresql://hunter:hunter@localhost:5432/hunter python -m pytest -q          # macOS / Linux
+$env:HUNTER_TEST_DATABASE_URL="postgresql://hunter:hunter@localhost:5432/hunter"; python -m pytest -q  # PowerShell
+```
+
+В CI на Linux база поднимается service-контейнером, и там пропуск считается ошибкой. На Windows-джобе тесты хранилища пропускаются: GitHub запускает service-контейнеры только на Linux (ADR-0003).
 
 ## Коды выхода
 

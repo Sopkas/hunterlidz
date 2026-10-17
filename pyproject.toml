@@ -7,7 +7,13 @@ name = "hunter"
 version = "0.1.0"
 description = "Hunter v0: lead research, scoring and human-approved outreach drafts"
 requires-python = ">=3.12"
-dependencies = ["publicsuffixlist==1.1.0.20261010"]
+dependencies = [
+    "publicsuffixlist==1.1.0.20261010",
+    "SQLAlchemy==2.0.54",
+    "alembic==1.20.0",
+    "psycopg==3.3.6",
+    "psycopg-binary==3.3.6",
+]
 
 [project.scripts]
 hunter = "hunter.runtime.main:main"
