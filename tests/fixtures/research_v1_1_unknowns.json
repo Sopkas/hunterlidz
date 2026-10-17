@@ -1,0 +1,73 @@
+{
+  "schema_version": "research_v1.1",
+  "company_id": "c-alpha",
+  "lead_id": "l-alpha",
+  "icp": "unknown",
+  "summary": "Сеть из 12 автосервисов в Москве и области; открыла два филиала за год.",
+  "facts": [],
+  "signals": [
+    {
+      "type": "news",
+      "text": "Упоминание в новостях",
+      "evidence_ids": [
+        "E2"
+      ],
+      "event_date": "",
+      "date_precision": "unknown"
+    }
+  ],
+  "problem_hypothesis": "",
+  "validation_question": null,
+  "recommended_product": "",
+  "relevant_case_claim_ids": [],
+  "scoring_inputs": {
+    "segment_match": {
+      "value": "unknown",
+      "evidence_ids": [],
+      "explanation": "Нет данных"
+    },
+    "task_match": {
+      "value": "unknown",
+      "evidence_ids": [],
+      "explanation": "Нет данных"
+    },
+    "scale_match": {
+      "value": "unknown",
+      "evidence_ids": [],
+      "explanation": "Нет данных"
+    },
+    "current_need_confirmed": {
+      "value": "unknown",
+      "evidence_ids": [],
+      "explanation": "Нет данных"
+    },
+    "problem_confirmed": {
+      "value": "unknown",
+      "evidence_ids": [],
+      "explanation": "Нет данных"
+    },
+    "relevant_case_confirmed": {
+      "value": "unknown",
+      "evidence_ids": [],
+      "explanation": "Нет данных"
+    },
+    "budget_evidence_level": {
+      "value": "unknown",
+      "evidence_ids": [],
+      "explanation": "Нет данных"
+    },
+    "contact_level": {
+      "value": "none",
+      "evidence_ids": [],
+      "explanation": "Нет данных"
+    }
+  },
+  "missing_data": [
+    "Нет сайта компании"
+  ],
+  "offer": {
+    "what_we_sell": "",
+    "why": null
+  },
+  "needs_review": true
+}
