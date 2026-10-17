@@ -24,8 +24,9 @@ from enum import StrEnum
 from hunter.domain.entities import Channel, _id, _utc, _version
 
 APPROVAL_TTL = timedelta(hours=24)  # doc 10 v1 setting, doc 12 APPROVAL_TTL_HOURS
-_CLAIM_ID = re.compile(r"^[a-z0-9_]+\.[a-z0-9_]+:v[1-9]\d*$")
-_SHA256 = re.compile(r"^[0-9a-f]{64}$")
+# fullmatch, not match with "$": "$" also matches before a trailing "\n".
+_CLAIM_ID = re.compile(r"[a-z0-9_]+\.[a-z0-9_]+:v[1-9]\d*")
+_SHA256 = re.compile(r"[0-9a-f]{64}")
 
 
 class MessageKind(StrEnum):
@@ -148,7 +149,7 @@ class MessageVersion:
                 raise ValueError(f"{name} must be a tuple of ids")
             if len(set(value)) != len(value):
                 raise ValueError(f"{name} must not repeat")
-        bad = [c for c in self.case_claim_ids if not _CLAIM_ID.match(c)]
+        bad = [c for c in self.case_claim_ids if not _CLAIM_ID.fullmatch(c)]
         if bad:
             raise ValueError("case_claim_ids: registry claim ids like auto_crm.experience:v1")
         _id(self.created_by, "created_by")
@@ -206,7 +207,7 @@ class Approval:
         ):
             _id(value, name)
         _version(self.message_version)
-        if not _SHA256.match(self.payload_hash):
+        if not _SHA256.fullmatch(self.payload_hash):
             raise ValueError("payload_hash is a sha256 hex digest")
         for value, name in ((self.approved_at, "approved_at"), (self.expires_at, "expires_at")):
             if value is None:
@@ -231,15 +232,21 @@ class Approval:
             expires_at=now + APPROVAL_TTL,
         )
 
-    def valid_for(self, version: MessageVersion, now: datetime) -> bool:
-        """Still binds this exact version: not revoked, not expired, same version and hash.
-        Reply, ban and actor rights are checked by the use case right before sending (S3-04)."""
+    def valid_for(self, version: MessageVersion, recipient: Recipient, now: datetime) -> bool:
+        """Still binds this exact version and its addressee: not revoked, not expired, same
+        version and hash, and the contact today is the one in the snapshot. Doc 10: a change
+        of the contact annuls the approval even when the text did not change.
+
+        `recipient` is the contact as stored now (contact_id, channel, normalized_address).
+        Reply, ban and actor rights are checked by the use case right before sending (S3-04).
+        """
         return (
             self.revoked_at is None
             and now < self.expires_at
             and self.message_id == version.message_id
             and self.message_version == version.version
             and self.payload_hash == version.payload_hash
+            and version.recipient == recipient
         )
 
 

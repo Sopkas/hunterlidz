@@ -84,10 +84,11 @@ def test_version_with_a_foreign_hash_is_not_created():
         dict(evidence_ids=("",)),
         dict(created_at=datetime(2026, 10, 18, 10, 0)),
         dict(created_by=" "),
+        dict(case_claim_ids=("auto_crm.experience:v1\n",)),
     ],
     ids=[
         "empty-body", "version", "old-claim-id", "claim-without-version", "claim-list",
-        "repeated-evidence", "blank-evidence", "naive-time", "no-author",
+        "repeated-evidence", "blank-evidence", "naive-time", "no-author", "trailing-newline",
     ],
 )  # fmt: skip
 def test_invalid_version_is_not_created(change):
@@ -133,29 +134,38 @@ def test_approval_is_built_from_the_stored_version():
     assert APPROVAL.payload_hash == V1.payload_hash
     assert APPROVAL.message_version == 1
     assert APPROVAL.expires_at - APPROVAL.approved_at == APPROVAL_TTL == timedelta(hours=24)
-    assert APPROVAL.valid_for(V1, NOW)
+    assert APPROVAL.valid_for(V1, IVAN, NOW)
 
 
 def test_t11_edited_text_invalidates_the_approval():
     v2 = version(2, body=BODY + "\n\nМожем разобрать процесс.")
-    assert not APPROVAL.valid_for(v2, NOW)
+    assert not APPROVAL.valid_for(v2, v2.recipient, NOW)
 
 
 def test_changed_recipient_invalidates_the_approval_even_with_the_same_text():
     # Doc 10: a contact change annuls the approval although the text did not change.
     v2 = version(2, recipient=replace(IVAN, normalized_address="i.petrov@alpha.ru"))
     assert v2.body == V1.body
-    assert not APPROVAL.valid_for(v2, NOW)
+    assert not APPROVAL.valid_for(v2, v2.recipient, NOW)
+
+
+def test_contact_changed_after_approval_invalidates_it():
+    # Review A on #12: the version keeps the old snapshot, the contact was edited afterwards.
+    edited = replace(IVAN, normalized_address="petrov@alpha.ru")
+    assert APPROVAL.valid_for(V1, IVAN, NOW)
+    assert not APPROVAL.valid_for(V1, edited, NOW + timedelta(hours=1))
+    assert not APPROVAL.valid_for(V1, replace(IVAN, channel=Channel.TELEGRAM), NOW)
+    assert not APPROVAL.valid_for(V1, replace(IVAN, contact_id="k2"), NOW)
 
 
 def test_approval_expires_after_24_hours():
-    assert APPROVAL.valid_for(V1, NOW + timedelta(hours=23, minutes=59))
-    assert not APPROVAL.valid_for(V1, NOW + timedelta(hours=24))
+    assert APPROVAL.valid_for(V1, IVAN, NOW + timedelta(hours=23, minutes=59))
+    assert not APPROVAL.valid_for(V1, IVAN, NOW + timedelta(hours=24))
 
 
 def test_revoked_approval_is_not_valid():
     revoked = replace(APPROVAL, revoked_at=NOW + timedelta(minutes=5))
-    assert not revoked.valid_for(V1, NOW + timedelta(minutes=10))
+    assert not revoked.valid_for(V1, IVAN, NOW + timedelta(minutes=10))
 
 
 def test_approval_of_another_message_is_not_valid():
@@ -169,20 +179,29 @@ def test_approval_of_another_message_is_not_valid():
         created_by="u-operator",
         created_at=NOW,
     )
-    assert not APPROVAL.valid_for(other, NOW)
+    assert not APPROVAL.valid_for(other, IVAN, NOW)
 
 
 @pytest.mark.parametrize(
     "change",
     [
         dict(payload_hash="client-sent-hash"),
+        dict(payload_hash=V1.payload_hash + "\n"),
         dict(expires_at=NOW),
         dict(revoked_at=NOW - timedelta(seconds=1)),
         dict(approved_at=datetime(2026, 10, 18, 10, 0)),
         dict(actor_id=" "),
         dict(message_version=0),
     ],
-    ids=["not-a-hash", "no-lifetime", "revoked-before", "naive", "no-actor", "version"],
+    ids=[
+        "not-a-hash",
+        "hash-with-newline",
+        "no-lifetime",
+        "revoked-before",
+        "naive",
+        "no-actor",
+        "version",
+    ],
 )
 def test_invalid_approval_is_not_created(change):
     with pytest.raises(ValueError):
