@@ -152,10 +152,11 @@ def test_planned_wording_must_stand_alone(text):
         "Там всё уже запущено.",
         "С ним работают три юрфирмы.",
         "Ею пользуются три юрфирмы.",
+        "Это уже работает у трёх клиентов.",
     ],
     ids=[
         "he", "his", "this-bot", "they", "subject-left-out", "and-he", "now-he", "also-he",
-        "this-service", "there", "with-it", "by-it",
+        "this-service", "there", "with-it", "by-it", "this-already",
     ],
 )  # fmt: skip
 def test_planned_case_cannot_be_continued(follow_up):
