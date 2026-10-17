@@ -33,16 +33,21 @@ _SPACES = frozenset((" ", _NBSP, _NARROW_NBSP, "\t"))
 _DASHES = frozenset("—–−")
 _WORD_CHARS = "а-яa-z0-9"
 _WORD = re.compile("[" + _WORD_CHARS + "]")
-_SENTENCE_END = re.compile(r"(?<=[.!?…])\s+")
+# A sentence ends at . ! ? … followed by a space, or directly by a capital letter ("…сервис.Он").
+_SENTENCE_END = re.compile(r"(?<=[.!?…])(?:\s+|(?=[А-ЯЁA-Z]))")
 _PARAGRAPH_BREAK = re.compile(r"\s*\n\s*")
 _TERMINATED = re.compile(r"[.!?…][)\]»”\"']*$")
-# A sentence that opens with one of these continues the previous one:
-# "Он уже умеет ...", "Уже сокращает ..." (subject left out), "Которая ведёт ...".
+# A sentence that opens with one of these continues the previous one: "Он уже умеет ...",
+# "Уже сокращает ..." (subject left out), "Которая ведёт ...". Up to two linking words may
+# come first: "И он уже работает ...", "Сейчас она обслуживает ...", "С ним работают ...".
 _CONTINUATION = re.compile(
-    r"(?:он|она|оно|они|его|ее|ему|ей|им|их|ими|нем|ней|них|этот|эта|эти|этого|этой|этих|"
+    r"(?:(?:и|а|но|также|сейчас|теперь|кстати|при этом|с|в|на|по)\s+){0,2}"
+    r"(?:он|она|оно|они|его|ее|ею|нею|ему|ей|им|их|ими|ним|нему|нем|ней|них|"
+    r"это|этот|эта|эти|эту|этого|этой|этом|этим|этих|этими|там|тут|туда|"
     r"такой|такая|такие|который|которая|которое|которые|которого|которой|которых|уже)"
     r"(?![" + _WORD_CHARS + "])"
 )
+_DIGIT = re.compile(r"\d")
 # While the text is split, each quoted wording is replaced by one private-use character.
 _PLACEHOLDER_BASE = 0xE000
 
@@ -329,7 +334,12 @@ def check_case_text(
         for case in registry.cases:
             if case.mention.matches(rest):
                 violations.append(Violation(ViolationCode.CASE_MENTION, case.case_key, fragment))
-            if case.case_key in quoted_cases and case.unconfirmed_in(rest):
+            in_statement = {claim.case_key for claim in statement.quoted}
+            unconfirmed = case.case_key in quoted_cases and case.unconfirmed_in(rest)
+            # A number next to a quoted wording is not in the wording, so it is not approved:
+            # "CRM для автомобильного бизнеса на 300 автосалонов".
+            numbered = case.case_key in in_statement and bool(_DIGIT.search(rest))
+            if unconfirmed or numbered:
                 violations.append(Violation(ViolationCode.NOT_CONFIRMED, case.case_key, fragment))
     return tuple(violations)
 

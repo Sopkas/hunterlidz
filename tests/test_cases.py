@@ -144,14 +144,74 @@ def test_planned_wording_must_stand_alone(text):
         "Этот бот экономит до десяти часов в неделю.",
         "Они уже проверяют должников автоматически.",
         "Уже сокращает время юристов вдвое.",
+        # Review A on #7: a linking word or a less common pronoun comes first.
+        "И он уже работает у трёх клиентов.",
+        "Сейчас он работает у трёх клиентов.",
+        "Также он ранжирует должников.",
+        "Этим сервисом пользуются три юрфирмы.",
+        "Там всё уже запущено.",
+        "С ним работают три юрфирмы.",
+        "Ею пользуются три юрфирмы.",
     ],
-    ids=["he", "his", "this-bot", "they", "subject-left-out"],
-)
+    ids=[
+        "he", "his", "this-bot", "they", "subject-left-out", "and-he", "now-he", "also-he",
+        "this-service", "there", "with-it", "by-it",
+    ],
+)  # fmt: skip
 def test_planned_case_cannot_be_continued(follow_up):
     for separator in (" ", "\n\n"):
         assert ViolationCode.CONTINUES_CASE in codes(
             f"{ASSISTANT.claim_text}{separator}{follow_up}", ASSISTANT
         )
+
+
+def test_continuation_without_a_space_after_the_dot_is_caught():
+    for case in (ASSISTANT, AUTO_CRM):
+        text = f"{case.claim_text}.Он уже работает у трёх клиентов."
+        assert ViolationCode.CONTINUES_CASE in codes(text, case)
+
+
+@pytest.mark.parametrize(
+    "follow_up",
+    [
+        "И она окупилась за 3 месяца.",
+        "Сейчас она обслуживает 40 дилеров.",
+        "Этим решением пользуются 40 дилеров.",
+        "Ею пользуются 40 дилеров.",
+    ],
+)
+def test_done_case_cannot_be_continued_with_results(follow_up):
+    assert ViolationCode.CONTINUES_CASE in codes(f"{AUTO_CRM.claim_text}. {follow_up}", AUTO_CRM)
+
+
+@pytest.mark.parametrize(
+    "follow_up",
+    [
+        "Можем разобрать процесс и показать варианты.",
+        "А как у вас сейчас ведётся запись клиентов?",
+        "Интересно, как устроена работа с клиентами.",
+    ],
+)
+def test_a_new_thought_after_the_case_is_not_a_continuation(follow_up):
+    assert codes(f"{AUTO_CRM.claim_text}. {follow_up}", AUTO_CRM) == []
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        f"{AUTO_CRM.claim_text} на 300 автосалонов по всей России.",
+        f"За 2 месяца: {AUTO_CRM.claim_text}.",
+    ],
+    ids=["number-after", "number-before"],
+)
+def test_number_next_to_a_wording_is_not_confirmed(text):
+    # Review A on #7: a number in the sentence of a quoted wording is not part of the wording.
+    assert codes(text, AUTO_CRM) == [ViolationCode.NOT_CONFIRMED]
+
+
+def test_number_in_another_sentence_is_fine():
+    text = f"Вижу, что у вас 12 филиалов.\n\n{AUTO_CRM.claim_text}. Можем разобрать процесс."
+    assert codes(text, AUTO_CRM) == []
 
 
 @pytest.mark.parametrize(
