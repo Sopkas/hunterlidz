@@ -11,6 +11,7 @@
 - Контракт доменных типов: `Company`, `Lead`, `Contact`, `Source`, `Evidence`, `Stage`, `Priority`, `RunMode` с проверками инвариантов; отклонения от документа 10 — `docs/domain-contract.md` (S1-05, ждёт ревью и Approve тимлида за обе зоны).
 - План переноса ветки `claude/H-01-H-11-hunter-v0`, соответствие H ↔ S и ID карточек YouGile — `docs/roadmap.md`, `docs/yougile-tasks.json` (S1-02).
 - ADR-0003: PostgreSQL, SQLAlchemy Core, Alembic, синхронный доступ, psycopg 3; локальная база `docker compose up -d --wait` (`compose.yaml`); PostgreSQL в CI на Linux-джобах; сетевая защита тестов видит соединения libpq (S1-06; решения по sync, Windows-джобе, защите и версиям приняты тимлидом 18.10).
+- Схема PostgreSQL первой миграции Alembic: `users`, `settings` (режим `shadow`), `audit_events` только на добавление, `campaigns`, `companies`, `contacts`, `sources`, `evidence`, `leads` с ограничениями документа 10; `hunter migrate`; `UserDirectory` на PostgreSQL; тесты хранилища во временной схеме с откатом транзакции (S1-07).
 - Контракт research_v1.1 (`domain/research.py`: схема и механические проверки документа 11, T-06) и LLM-порт (`application/llm.py`: статусы success / denied / invalid / timeout / error, usage и стоимость в каждом ответе); `docs/research-contract.md` (S2-01, ждёт Approve обеих зон).
 - Реестр кейсов и правило T-07 (`case_text_v2`): о кейсе — только утверждёнными владельцем формулировками, иначе Approve блокируется; 14 формулировок четырёх кейсов документа 01 — `data/case_claims.json`, правила — `docs/case-claims.md` (S2-03).
 - Контракт сделки: `Meeting`, `Proposal`, `Order`, `Payment`, `Money`; WON только с действующим заказом, возврат вычитается, валюты не смешиваются; метрики документа 07 — `docs/deals-contract.md` (S4-04, ждёт Approve обеих зон).
@@ -19,7 +20,7 @@
 
 ## Что ещё не сделано
 
-Всё остальное из H-01…H-11 есть в ветке `claude/H-01-H-11-hunter-v0` и переносится по задачам `docs/roadmap.md`: PostgreSQL и миграции (S1-06, S1-07), пользователи и режимы (S1-08), импорт (S1-10), демо S1 (S1-12), спринты S2–S4.
+Всё остальное из H-01…H-11 есть в ветке `claude/H-01-H-11-hunter-v0` и переносится по задачам `docs/roadmap.md`: пользователи и режимы (S1-08), импорт (S1-10), демо S1 (S1-12), спринты S2–S4.
 
 ## Важные решения
 
@@ -91,6 +92,7 @@
 | 2026-10-18 | S2-03 | B | По ревью B на #7: «Чего проверка не ловит» исправлено — цифра в соседнем предложении не ловится, это на операторе; известный пропуск закреплён тестом; «это» убрано из слов продолжения | 258 passed, ruff чисто (macOS, Python 3.14) | Approve Максима |
 | 2026-10-18 | S1-06 | A | ADR-0003 вместо SQLite-версии ветки: PostgreSQL, SQLAlchemy Core, Alembic, раскладка и отказ от `/v1` — принято; sync, psycopg 3, CI на Linux, тесты за защитой — предложено. `compose.yaml` (`postgres:18.6-alpine`, loopback IPv4 и IPv6), зависимости с точными версиями, service-контейнер в CI, защита `conftest.py` для libpq, фикстура `database_url`, README «База» | См. строку «Проверка» в PR | Approve координатора зоны A; таблицы и миграции — S1-07 |
 | 2026-10-18 | S1-06 | A | По ревью A на #10: пункты 5–8 ADR-0003 — «принято, тимлид 18.10»; закреплены `greenlet` и транзитивные пакеты pytest; защита тестов убирает `PGHOST`, `PGHOSTADDR`, `PGSERVICE`, `PGSERVICEFILE` | См. ответ на ревью в PR | Approve тимлида |
+| 2026-10-18 | S1-07 | A | Миграция Alembic `0001` из схем 0001–0002 ветки (без объявлений и импорта): UUID, CHECK по перечислениям домена, уникальный активный домен, один активный лид на company + campaign, `normalized_name` компании, аудит только на добавление, `updated_at` триггером; `hunter migrate` с кодом 1 и адресом без пароля, таймаут соединения 10 с; `PostgresUserDirectory`; фикстуры `pg_engine` и `db`; валюта латиницей в `config.py`; отклонения 9–15 в `docs/domain-contract.md` | См. строку «Проверка» в PR | Пользователи и режимы — S1-08, компании и лиды в сценарии — S1-10 |
 | 2026-10-18 | S4-04 | B | КОНТРАКТ: встречи, КП, заказы и оплаты по документам 04, 06, 07, 10; `check_won`, `paid`, `contracted_value`, `cash_received`, `proposal_opportunities`, `calls_held`; семь отклонений от документа 10 записаны | 731 passed (58 новых), ruff чисто (macOS, Python 3.14) | Approve Максима за зону A; миграции и сценарии — S4-05 |
 | 2026-10-18 | S4-04 | B | По ревью A на #9: `price_max` проверяется на конечность (`Infinity`, `NaN` → `ValueError`); у `Proposal` есть `version`; код валюты только латиницей (и в `Tariff`); суммы до двух знаков под `numeric(18, 2)`; `check_order_proposal`; период метрик — у вызывающего кода | 750 passed, ruff чисто (macOS, Python 3.14) | Повторное ревью Максима |
 | 2026-10-18 | S2-08 | B | `domain/scoring.py` из `608dc6b`, приведён к S2-01, S2-03 и S1-13: компоненты документа 04 с причинами, `eligibility` (T-05), `OperatorException` (решение по T-06) | 737 passed (64 новых), ruff чисто (macOS, Python 3.14) | Таблица `scores` — после S1-07; сценарий — S2-10 |

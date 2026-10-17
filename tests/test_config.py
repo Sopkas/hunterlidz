@@ -80,7 +80,9 @@ def test_dotenv_skips_comments_and_blank_values(tmp_path: Path):
     assert read_dotenv(dotenv) == {"A": "quoted"}
 
 
-@pytest.mark.parametrize("raw", ["RUBL", "12", ""], ids=["long", "digits", "blank-ish"])
+@pytest.mark.parametrize(
+    "raw", ["RUBL", "12", "", "руб"], ids=["long", "digits", "blank-ish", "cyrillic"]
+)
 def test_bad_currency(raw, tmp_path: Path):
     env = {"HUNTER_DATABASE_URL": URL, "HUNTER_DEFAULT_CURRENCY": raw or " "}
     with pytest.raises(ConfigError, match="HUNTER_DEFAULT_CURRENCY"):

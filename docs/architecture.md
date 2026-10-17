@@ -38,6 +38,14 @@ grep -rnE "^from hunter\.(infrastructure|runtime)" src/hunter/presentation
 
 `runtime/config.py` читает окружение и `.env` (окружение важнее). Обязательна `HUNTER_DATABASE_URL` (PostgreSQL). Ошибка конфигурации — код выхода 2 до любых сетевых вызовов. Адрес базы показывается без логина и пароля.
 
+## Хранилище
+
+PostgreSQL, SQLAlchemy Core, Alembic, синхронный доступ (ADR-0003). `infrastructure/postgres/db.py` создаёт движок с драйвером `postgresql+psycopg` и таймаутом соединения 10 с по умолчанию и применяет миграции. `hunter migrate` — то же из CLI. Миграции — `infrastructure/postgres/migrations/versions/`, SQL в них написан явно, а значения CHECK сверяются с перечислениями домена тестом (`tests/test_storage_schema.py`).
+
+Что гарантирует база, а не код: уникальный домен активной компании, один активный лид на компанию и кампанию, уникальный адрес контакта в канале, одна запись даты события, UUID у идентификаторов, `updated_at` (триггер), аудит только на добавление (триггер на UPDATE, DELETE, TRUNCATE). Отличия от документа 10 — `docs/domain-contract.md`.
+
+Ограничение: суперпользователь PostgreSQL может отключить триггеры. Аудит защищён от приложения и оператора, а не от администратора базы.
+
 ## Кто выполняет действие
 
 Пользователь Hunter связан с внешней учётной записью полем `identity_id` (документ 10, таблица `users`): `os:<логин>` для локального CLI, позже `telegram:<id>` для панели. Действующий пользователь — тот, чей `identity_id` совпадает с учётной записью ОС, под которой запущен процесс (`infrastructure/os_identity.py`). Логин берётся у ОС: на Windows — `GetUserNameW` (`os.getlogin`, без учёта регистра), на Linux и macOS — по UID процесса. Переменные окружения (`HUNTER_ACTOR`, `USERNAME`, `USER`, `LOGNAME`), `.env` и аргументы команд не учитываются. `getpass.getuser()` не используется: он читает переменные окружения. Проверка — `hunter whoami` и `tests/test_access.py`, `tests/test_os_identity.py`.

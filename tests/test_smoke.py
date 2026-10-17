@@ -3,9 +3,13 @@
 import os
 import subprocess
 import sys
+import uuid
 from pathlib import Path
 
 import pytest
+from sqlalchemy import text
+
+from hunter.infrastructure.postgres.db import create_db_engine
 
 SRC = Path(__file__).resolve().parents[1] / "src"
 
@@ -53,3 +57,30 @@ def test_bad_url_exits_2_and_hides_password(tmp_path, url, secret):
     assert result.returncode == 2, result.stdout + result.stderr
     assert "HUNTER_DATABASE_URL" in result.stderr
     assert secret not in result.stdout + result.stderr
+
+
+def test_migrate_without_a_database_exits_1_and_hides_password(tmp_path):
+    # Port 1 on this machine: nothing listens and nothing leaves the machine. Windows does not
+    # refuse a closed port at once but waits for the timeout, hence the short one.
+    url = "postgresql://hunter:s3cret@127.0.0.1:1/hunter?connect_timeout=2"
+    result = run_hunter("migrate", cwd=tmp_path, extra_env={"HUNTER_DATABASE_URL": url})
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "PROVIDER_UNAVAILABLE" in result.stderr and "127.0.0.1:1/hunter" in result.stderr
+    assert "s3cret" not in result.stdout + result.stderr
+
+
+def test_migrate_brings_an_empty_schema_up_to_date_twice(tmp_path, database_url):
+    schema = f"hunter_cli_{uuid.uuid4().hex[:12]}"
+    admin = create_db_engine(database_url)
+    with admin.begin() as connection:
+        connection.execute(text(f"CREATE SCHEMA {schema}"))
+    url = f"{database_url}?options=-c%20search_path%3D{schema}"
+    try:
+        for _ in range(2):
+            result = run_hunter("migrate", cwd=tmp_path, extra_env={"HUNTER_DATABASE_URL": url})
+            assert result.returncode == 0, result.stdout + result.stderr
+            assert "ревизия 0001" in result.stdout
+    finally:
+        with admin.begin() as connection:
+            connection.execute(text(f"DROP SCHEMA {schema} CASCADE"))
+        admin.dispose()

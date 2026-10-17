@@ -92,7 +92,8 @@ def load_settings(environ: Mapping[str, str], dotenv_path: Path) -> Settings:
             "Скопируйте .env.example в .env и заполните его."
         )
     currency = env.get("HUNTER_DEFAULT_CURRENCY", "RUB").strip().upper()
-    if len(currency) != 3 or not currency.isalpha():
+    # isascii: «руб» is three letters too, and would split money metrics (review A on #9).
+    if len(currency) != 3 or not currency.isascii() or not currency.isalpha():
         raise ConfigError(f"HUNTER_DEFAULT_CURRENCY: ожидается код ISO 4217, получено {currency!r}")
     return Settings(
         database_url=parse_database_url(database_url),
