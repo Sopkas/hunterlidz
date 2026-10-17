@@ -13,20 +13,19 @@ Spend: every outcome carries usage and cost; the daily limit is checked by the b
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 from enum import StrEnum
 
-from hunter.application.llm import LlmClient, LlmRequest, LlmStatus, Usage
+from hunter.application.llm import LlmClient, Usage
+from hunter.application.llm_calls import call_parsed
 from hunter.application.prompts import EvidenceItem, build_draft_request
 from hunter.domain.cases import CaseRegistry
-from hunter.domain.drafts import FIRST_MESSAGE_LIMIT, Draft, body_blockers, parse_draft
+from hunter.domain.drafts import FIRST_MESSAGE_LIMIT, body_blockers, parse_draft
 from hunter.domain.entities import Contact, Evidence
 from hunter.domain.messages import MessageKind, MessageVersion, Recipient
-from hunter.domain.research import Research, SchemaError
-
-CORRECTION = "\n\nПредыдущий ответ не прошёл проверку формы: {error}. Верни исправленный JSON."
+from hunter.domain.research import Research
 
 
 class DraftStatus(StrEnum):
@@ -99,37 +98,19 @@ def prepare_draft(
         limit=FIRST_MESSAGE_LIMIT,
     )
 
-    usage, cost, corrections = Usage(0, 0), Decimal(0), 0
-    draft: Draft | None = None
-    error: str | None = None
-    model_id = client.model_id
-    for attempt in (1, 2):
-        result = client.complete_json(request)
-        usage = usage + result.usage
-        cost = None if cost is None or result.cost is None else cost + result.cost
-        if result.status is not LlmStatus.SUCCESS:
-            error = f"модель: {result.status} ({result.error_code})"
-            if result.status is LlmStatus.INVALID and attempt == 1:
-                corrections += 1
-                request = _corrected(request, f"ответ не JSON ({result.error_code})")
-                continue
-            break
-        try:
-            draft = parse_draft(
-                result.data,
-                evidence_aliases=aliases,
-                allowed_claim_ids=frozenset(c.id for c in claims),
-            )
-            error = None
-            break
-        except SchemaError as exc:
-            error = f"схема: {exc}"
-            if attempt == 1:
-                corrections += 1
-                request = _corrected(request, str(exc))
-    spent = dict(usage=usage, cost=cost, corrections=corrections, model_id=model_id)
+    call = call_parsed(
+        client,
+        request,
+        lambda data: parse_draft(
+            data, evidence_aliases=aliases, allowed_claim_ids=frozenset(c.id for c in claims)
+        ),
+    )
+    draft = call.value
+    spent = dict(
+        usage=call.usage, cost=call.cost, corrections=call.corrections, model_id=client.model_id
+    )
     if draft is None:
-        return DraftOutcome(DraftStatus.FAILED, error=error, **spent)
+        return DraftOutcome(DraftStatus.FAILED, error=call.error, **spent)
 
     blockers = body_blockers(
         draft.body, kind=MessageKind.INITIAL, registry=registry, case_claim_ids=draft.case_claim_ids
@@ -158,12 +139,4 @@ def prepare_draft(
         blockers=blockers,
         review_reasons=draft.review_reasons,
         **spent,
-    )
-
-
-def _corrected(request: LlmRequest, error: str) -> LlmRequest:
-    return replace(
-        request,
-        call_id=request.call_id.rsplit(":", 1)[0] + ":2",
-        user=request.user + CORRECTION.format(error=error),
     )
