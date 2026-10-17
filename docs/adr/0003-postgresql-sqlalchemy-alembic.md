@@ -108,6 +108,11 @@ Service-контейнеры GitHub Actions работают только на L
 | alembic | 1.20.0 | 11.09.2026 | Последняя |
 | psycopg, psycopg-binary | 3.3.6 | 18.09.2026 | Последняя |
 | Mako, MarkupSafe, typing_extensions, tzdata (Windows) | 1.4.3, 3.0.4, 4.16.0, 2026.5 | — | Транзитивные. Закреплены в `requirements.txt`, чтобы установка везде была одинаковой |
+| greenlet | 3.5.6 | 14.09.2026 | Транзитивная от SQLAlchemy, ставится только на x86_64, AMD64, aarch64 и ppc64le (маркер SQLAlchemy), на macOS arm64 её нет. Закреплена с тем же маркером. Пропущена в первой редакции, найдена на ревью #10 |
+
+Транзитивные пакеты pytest в `requirements-dev.txt` (iniconfig 2.3.0, packaging 26.3, pluggy 1.6.0, Pygments 2.21.0, colorama 0.4.6 на Windows) с S1-03 не были закреплены, и CI брал pluggy 1.7.0 трёхдневной давности. Закреплены здесь же.
+
+Проверка, что закреплено всё: `pip install --dry-run --ignore-installed --report report.json -r requirements-dev.txt` — каждый пакет из отчёта есть в `requirements.txt` или `requirements-dev.txt` с точной версией.
 
 Образ `postgres:18.6-alpine` — 21.09.2026, текущая мажорная версия.
 

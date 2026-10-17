@@ -11,3 +11,5 @@ Mako==1.4.3
 MarkupSafe==3.0.4
 typing_extensions==4.16.0
 tzdata==2026.5; sys_platform == "win32"
+# SQLAlchemy needs greenlet only on these machines (its own marker); not on macOS arm64.
+greenlet==3.5.6; platform_machine == "aarch64" or platform_machine == "ppc64le" or platform_machine == "x86_64" or platform_machine == "amd64" or platform_machine == "AMD64" or platform_machine == "win32" or platform_machine == "WIN32"
