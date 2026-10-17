@@ -55,6 +55,23 @@ def test_canonical_url(raw, expected):
     assert canonical_url(raw) == expected
 
 
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "www.www.example.com",
+        "https://WWW.www.Example.com/a/",
+        "https://пример.рф/о-нас/?utm_source=x&b=2&a=1#top",
+        "https://example.com/%7euser/%2f",
+        "https://user:secret@example.com:443/",
+        "https://[2001:DB8::1]:8080/a",
+    ],
+)
+def test_canonical_url_is_idempotent(raw):
+    # Review A on #5: a stored Source.canonical_url must not change when normalized again.
+    once = canonical_url(raw)
+    assert canonical_url(once) == once
+
+
 def test_significant_query_is_kept_review_1_probe():
     # Review 1: the old key dropped the whole query, task.php?id=1 and ?id=2 became one source.
     one = canonical_url("https://example.com/task.php?id=1")
@@ -194,6 +211,50 @@ def test_no_company_key(raw):
 def test_two_vk_pages_are_not_one_company():
     assert company_domain("https://vk.com/alpha") is None
     assert company_domain("https://vk.com/beta") is None
+
+
+# Review A on #5: domains that belong to nobody we research must not become a company key,
+# otherwise two different companies on one platform merge into one.
+@pytest.mark.parametrize(
+    ("first", "second"),
+    [
+        ("https://alpha.business.site", "https://beta.business.site"),
+        ("https://www.ozon.ru/seller/alpha", "https://www.ozon.ru/seller/beta"),
+        ("https://www.wildberries.ru/seller/1", "https://www.wildberries.ru/seller/2"),
+        ("https://www.pulscen.ru/firms/alpha", "https://www.pulscen.ru/firms/beta"),
+        ("https://www.yell.ru/moscow/com/alpha", "https://www.yell.ru/moscow/com/beta"),
+        ("https://sbis.ru/contragents/1", "https://sbis.ru/contragents/2"),
+        ("https://zakupki.gov.ru/epz/1", "https://zakupki.gov.ru/epz/2"),
+        ("https://tenchat.ru/alpha", "https://tenchat.ru/beta"),
+        ("https://max.ru/alpha", "https://max.ru/beta"),
+        ("alpha@gmail.com", "beta@gmail.com"),
+        ("https://e.mail.ru/alpha", "https://e.mail.ru/beta"),
+        ("alpha@bk.ru", "beta@inbox.ru"),
+    ],
+    ids=[
+        "site-builder", "ozon", "wildberries", "catalogue", "directory", "registry",
+        "procurement", "tenchat", "max", "gmail", "mail-ru", "mail-ru-family",
+    ],
+)  # fmt: skip
+def test_two_pages_on_one_platform_are_not_one_company(first, second):
+    keys = {company_domain(first), company_domain(second)}
+    assert None in keys or len(keys) == 2
+    companies = [Company(id="c1", name="ООО Альфа", normalized_domain=company_domain(first))]
+    match = match_company(name="ООО Бета", domain=company_domain(second), companies=companies)
+    assert match.outcome is MatchOutcome.NEW
+
+
+@pytest.mark.parametrize(
+    "raw", ["https://bit.ly/alpha", "clck.ru/abc", "https://vk.cc/x", "goo.gl/x", "tinyurl.com/x"]
+)
+def test_link_shortener_asks_for_the_full_address(raw):
+    with pytest.raises(UrlError) as exc:
+        company_domain(raw)
+    assert exc.value.code == "shortener"
+
+
+def test_corporate_mail_address_gives_the_company_domain():
+    assert company_domain("sales@alpha-trade.ru") == "alpha-trade.ru"
 
 
 def test_company_domain_rejects_non_http():
