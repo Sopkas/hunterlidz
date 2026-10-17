@@ -209,6 +209,30 @@ def test_number_next_to_a_wording_is_not_confirmed(text):
     assert codes(text, AUTO_CRM) == [ViolationCode.NOT_CONFIRMED]
 
 
+@pytest.mark.parametrize(
+    "follow_up",
+    ["Решение окупилось за 3 месяца.", "Продажи выросли на 25%.", "Проект занял 2 месяца."],
+)
+def test_known_gap_number_in_the_next_sentence_passes(follow_up):
+    # Review B on #7: listed in "Чего проверка не ловит", the operator checks such a sentence.
+    # If this starts failing, the rule got stricter: update the document.
+    assert codes(f"{AUTO_CRM.claim_text}. {follow_up}", AUTO_CRM) == []
+
+
+@pytest.mark.parametrize(
+    "follow_up",
+    [
+        "Это может быть полезно и вам.",
+        "Там, где учёт в Excel, обычно теряются заявки.",
+        "Им может быть интересно ваше мнение.",
+    ],
+)
+def test_known_cost_of_wider_continuation(follow_up):
+    # "Это" is not a continuation word; "Там" and "Им" are, and block these lines (safe side).
+    blocked = ViolationCode.CONTINUES_CASE in codes(f"{AUTO_CRM.claim_text}. {follow_up}", AUTO_CRM)
+    assert blocked is not follow_up.startswith("Это")
+
+
 def test_number_in_another_sentence_is_fine():
     text = f"Вижу, что у вас 12 филиалов.\n\n{AUTO_CRM.claim_text}. Можем разобрать процесс."
     assert codes(text, AUTO_CRM) == []
