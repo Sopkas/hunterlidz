@@ -1,0 +1,329 @@
+{
+  "verified_on": "2026-10-12",
+  "project_id": "6afc39b5-5060-4e09-af60-2d01c3e0b48b",
+  "board_id": "e0dcf9c1-b4e0-4188-9410-217bf29022ee",
+  "project_url": "https://ru.yougile.com/team/37386113467a/HunterLidz",
+  "columns": {
+    "Бэклог": "46a91090-0fb5-4a10-a7fb-457279fbbb8e",
+    "К выполнению": "d3295bc5-8cbc-4ee0-ae7b-42b301049e93",
+    "В работе": "d9da08c5-7f92-4091-91b6-4786c002cc25",
+    "На проверке": "5c92c2f5-4c63-4ceb-a6b5-360e4f8baff9",
+    "Ожидание": "a695becf-431c-4e79-8284-65313e69c95c",
+    "Готово": "05b64ea1-7ab4-4970-91ea-c7f5103a6f0a"
+  },
+  "tasks": [
+    {
+      "roadmap_id": "S1-01",
+      "role": "A",
+      "sprint": 1,
+      "hours": 3,
+      "status": "В работе",
+      "task_id": "f3d3dd26-25cd-4e12-9565-b146bc8b9309"
+    },
+    {
+      "roadmap_id": "S1-02",
+      "role": "A",
+      "sprint": 1,
+      "hours": 3,
+      "status": "К выполнению",
+      "task_id": "76748bf5-96e9-401f-838c-a3f0c43421a4"
+    },
+    {
+      "roadmap_id": "S1-03",
+      "role": "A",
+      "sprint": 1,
+      "hours": 4,
+      "status": "К выполнению",
+      "task_id": "911cb7c6-583d-407b-8236-f6e70f7710c3"
+    },
+    {
+      "roadmap_id": "S1-04",
+      "role": "A",
+      "sprint": 1,
+      "hours": 5,
+      "status": "К выполнению",
+      "task_id": "a64391ea-9d42-476e-91dd-1da2be4b3ee6"
+    },
+    {
+      "roadmap_id": "S1-05",
+      "role": "B",
+      "sprint": 1,
+      "hours": 3,
+      "status": "К выполнению",
+      "task_id": "bfe64b06-9a84-4df0-99bc-608d9620b379",
+      "contract": true
+    },
+    {
+      "roadmap_id": "S1-06",
+      "role": "A",
+      "sprint": 1,
+      "hours": 3,
+      "status": "К выполнению",
+      "task_id": "9eecd02a-0b76-49af-af4e-b9569e3ff723"
+    },
+    {
+      "roadmap_id": "S1-07",
+      "role": "A",
+      "sprint": 1,
+      "hours": 8,
+      "status": "Бэклог",
+      "task_id": "57daca78-5ce3-4d1a-b77d-a7a7e2b151dd"
+    },
+    {
+      "roadmap_id": "S1-08",
+      "role": "A",
+      "sprint": 1,
+      "hours": 4,
+      "status": "Бэклог",
+      "task_id": "305427b0-2fc0-4941-8387-3f93f66f4d41"
+    },
+    {
+      "roadmap_id": "S1-09",
+      "role": "B",
+      "sprint": 1,
+      "hours": 6,
+      "status": "Бэклог",
+      "task_id": "3a671f9a-41a2-46a9-ab50-0923b328493f"
+    },
+    {
+      "roadmap_id": "S1-10",
+      "role": "A",
+      "sprint": 1,
+      "hours": 6,
+      "status": "Бэклог",
+      "task_id": "e87ee8aa-274b-409f-9b85-84d37cbbfca4"
+    },
+    {
+      "roadmap_id": "S1-12",
+      "role": "A",
+      "sprint": 1,
+      "hours": 3,
+      "status": "Бэклог",
+      "task_id": "22bcb990-4a94-473b-8e50-d7333027eb1f"
+    },
+    {
+      "roadmap_id": "S1-13",
+      "role": "B",
+      "sprint": 1,
+      "hours": 4,
+      "status": "Бэклог",
+      "task_id": "3cc881dc-4d8e-4681-8088-b390ff3ab342"
+    },
+    {
+      "roadmap_id": "S2-01",
+      "role": "B",
+      "sprint": 2,
+      "hours": 3,
+      "status": "Бэклог",
+      "task_id": "c5e1f0dc-8c1e-414a-9baf-b1d89a8fa0a3"
+    },
+    {
+      "roadmap_id": "S2-02",
+      "role": "B",
+      "sprint": 2,
+      "hours": 5,
+      "status": "Бэклог",
+      "task_id": "82459b77-8f8a-4b83-915b-337252a5ee08"
+    },
+    {
+      "roadmap_id": "S2-03",
+      "role": "B",
+      "sprint": 2,
+      "hours": 5,
+      "status": "Бэклог",
+      "task_id": "b916a8d0-9642-4986-af6d-74b90ee27538"
+    },
+    {
+      "roadmap_id": "S2-04",
+      "role": "B",
+      "sprint": 2,
+      "hours": 6,
+      "status": "Бэклог",
+      "task_id": "b8ea467b-f6d5-4f4d-8a7d-0ae286e9209c"
+    },
+    {
+      "roadmap_id": "S2-05",
+      "role": "B",
+      "sprint": 2,
+      "hours": 4,
+      "status": "Бэклог",
+      "task_id": "978146f9-9688-4115-8e87-53e304aa3517"
+    },
+    {
+      "roadmap_id": "S2-06",
+      "role": "A",
+      "sprint": 2,
+      "hours": 6,
+      "status": "Бэклог",
+      "task_id": "301815d3-f3c6-4081-bb8f-6daa996d3e89"
+    },
+    {
+      "roadmap_id": "S2-07",
+      "role": "B",
+      "sprint": 2,
+      "hours": 5,
+      "status": "Бэклог",
+      "task_id": "c9ac1c80-e907-4174-94a9-869a54043ed1"
+    },
+    {
+      "roadmap_id": "S2-08",
+      "role": "B",
+      "sprint": 2,
+      "hours": 6,
+      "status": "Бэклог",
+      "task_id": "62cc3f08-38c2-4d7b-9c8e-926d7a092ccc"
+    },
+    {
+      "roadmap_id": "S2-09",
+      "role": "B",
+      "sprint": 2,
+      "hours": 6,
+      "status": "Бэклог",
+      "task_id": "c9f70f2c-804e-4a8b-b3c5-f4c51e2058f9"
+    },
+    {
+      "roadmap_id": "S2-10",
+      "role": "A",
+      "sprint": 2,
+      "hours": 5,
+      "status": "Бэклог",
+      "task_id": "488ddae9-0a17-418e-bc59-ce50275e0ce1"
+    },
+    {
+      "roadmap_id": "S3-01",
+      "role": "B",
+      "sprint": 3,
+      "hours": 3,
+      "status": "Бэклог",
+      "task_id": "c1b8e1d0-92e1-4b3b-8780-5e579c8a124f"
+    },
+    {
+      "roadmap_id": "S3-02",
+      "role": "A",
+      "sprint": 3,
+      "hours": 6,
+      "status": "Бэклог",
+      "task_id": "ae304246-0689-418c-b313-a23b73875578"
+    },
+    {
+      "roadmap_id": "S3-03",
+      "role": "B",
+      "sprint": 3,
+      "hours": 5,
+      "status": "Бэклог",
+      "task_id": "e10561c9-9112-4deb-ae07-91cca1914eac"
+    },
+    {
+      "roadmap_id": "S3-04",
+      "role": "A",
+      "sprint": 3,
+      "hours": 6,
+      "status": "Бэклог",
+      "task_id": "49a11b9c-891b-47b3-a301-6710887984fc"
+    },
+    {
+      "roadmap_id": "S3-05",
+      "role": "A",
+      "sprint": 3,
+      "hours": 8,
+      "status": "Бэклог",
+      "task_id": "26d2bb06-6470-4127-9994-c3e2f7c04937"
+    },
+    {
+      "roadmap_id": "S3-06",
+      "role": "A",
+      "sprint": 3,
+      "hours": 4,
+      "status": "Бэклог",
+      "task_id": "220c1efe-782a-4a66-9da7-d65fd040e20f"
+    },
+    {
+      "roadmap_id": "S3-07",
+      "role": "A",
+      "sprint": 3,
+      "hours": 5,
+      "status": "Бэклог",
+      "task_id": "0933eab6-694b-4a62-8f61-e07ecd1ab03d"
+    },
+    {
+      "roadmap_id": "S3-08",
+      "role": "A",
+      "sprint": 3,
+      "hours": 3,
+      "status": "Бэклог",
+      "task_id": "fd2aaada-aaeb-41aa-8c47-c904abdb0890"
+    },
+    {
+      "roadmap_id": "S4-01",
+      "role": "A",
+      "sprint": 4,
+      "hours": 8,
+      "status": "Бэклог",
+      "task_id": "7d2480fb-c4f0-4838-9f85-ae2923cb4c0b"
+    },
+    {
+      "roadmap_id": "S4-02",
+      "role": "A",
+      "sprint": 4,
+      "hours": 6,
+      "status": "Бэклог",
+      "task_id": "4cd3313d-3287-40e0-a439-8c72aee42e8a"
+    },
+    {
+      "roadmap_id": "S4-03",
+      "role": "A",
+      "sprint": 4,
+      "hours": 6,
+      "status": "Бэклог",
+      "task_id": "96082d55-1625-4444-88cd-517a0387a230"
+    },
+    {
+      "roadmap_id": "S4-04",
+      "role": "B",
+      "sprint": 4,
+      "hours": null,
+      "status": "Бэклог",
+      "task_id": "6c0afa36-bdfd-47e2-8124-98cadf0d0e5c"
+    },
+    {
+      "roadmap_id": "S4-05",
+      "role": "A",
+      "sprint": 4,
+      "hours": null,
+      "status": "Бэклог",
+      "task_id": "a0c740b8-4c10-448e-9cde-27b98be7cb33"
+    },
+    {
+      "roadmap_id": "S4-06",
+      "role": "B",
+      "sprint": 4,
+      "hours": 6,
+      "status": "Бэклог",
+      "task_id": "c09df529-50e8-4bbb-8ee1-96b8dc3f31ed"
+    },
+    {
+      "roadmap_id": "S4-07",
+      "role": "A",
+      "sprint": 4,
+      "hours": 8,
+      "status": "Бэклог",
+      "task_id": "12c32f36-a95a-4d8c-8b52-c2376d9a6fc7"
+    },
+    {
+      "roadmap_id": "S5-01",
+      "role": "A",
+      "sprint": 5,
+      "hours": 8,
+      "status": "Бэклог",
+      "task_id": "4a54b498-0f1c-46b3-a501-d4eabd2aea30"
+    },
+    {
+      "roadmap_id": "S5-02",
+      "role": null,
+      "sprint": 5,
+      "hours": 4,
+      "status": "Бэклог",
+      "task_id": "caee70db-8fd7-4de6-a280-1431695c82ac"
+    }
+  ]
+}
