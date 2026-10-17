@@ -1,0 +1,2 @@
+# Runtime dependencies, pinned to exact versions. New ones go through the zone A coordinator.
+# None yet: the database driver and migrations arrive with S1-06.
