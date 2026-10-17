@@ -13,12 +13,13 @@ harness and a live client measures the model.
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field, replace
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass, field
 from datetime import date, datetime, time, timezone
 from decimal import Decimal
 
-from hunter.application.llm import LlmClient, LlmRequest, LlmStatus, Usage
+from hunter.application.llm import LlmClient, LlmStatus, Usage
+from hunter.application.llm_calls import call_parsed
 from hunter.application.prompts import (
     RESEARCH_PROMPT_VERSION,
     EvidenceItem,
@@ -27,14 +28,10 @@ from hunter.application.prompts import (
 from hunter.domain.cases import CaseRegistry
 from hunter.domain.contacts import normalize_address
 from hunter.domain.entities import Channel, Contact, Evidence, SourceType
-from hunter.domain.research import Research, SchemaError, parse_research
+from hunter.domain.research import Research, parse_research
 from hunter.domain.scoring import Score, compute_score
 
 KINDS = ("founders", "existing_business", "agencies", "hard")
-CORRECTION = (
-    "\n\nПредыдущий ответ не прошёл проверку формы: {error}. "
-    "Верни исправленный JSON того же содержания по схеме."
-)
 
 
 class CardError(ValueError):
@@ -293,41 +290,25 @@ def run_card(card: EvalCard, client: LlmClient, registry: CaseRegistry) -> CardR
         ],
         claims=usable,
     )
-    usage, cost, corrections = Usage(0, 0), Decimal(0), 0
-    research: Research | None = None
-    raw = ""
-    error: str | None = None
-    for attempt in (1, 2):
-        result = client.complete_json(request)
-        usage = usage + result.usage
-        cost = None if cost is None or result.cost is None else cost + result.cost
-        if result.status is not LlmStatus.SUCCESS:
-            error = f"модель: {result.status} ({result.error_code})"
-            if result.status is LlmStatus.INVALID and attempt == 1:
-                corrections += 1
-                request = _corrected(request, f"ответ не JSON ({result.error_code})")
-                continue
-            break
-        raw = json.dumps(result.data, ensure_ascii=False)
-        try:
-            research = parse_research(
-                result.data,
-                lead_id=card.lead_id,
-                company_id=card.company_id,
-                evidence_aliases=aliases,
-                allowed_claim_ids=frozenset(c.id for c in usable),
-                today=card.as_of,
-            )
-            error = None
-            break
-        except SchemaError as exc:
-            error = f"схема: {exc}"
-            if attempt == 1:
-                corrections += 1
-                request = _corrected(request, str(exc))
+    raw: list[str] = []
+
+    def parse(data: object) -> Research:
+        raw.append(json.dumps(data, ensure_ascii=False))
+        return parse_research(
+            data,
+            lead_id=card.lead_id,
+            company_id=card.company_id,
+            evidence_aliases=aliases,
+            allowed_claim_ids=frozenset(c.id for c in usable),
+            today=card.as_of,
+        )
+
+    call = call_parsed(client, request, parse)
+    usage, cost, corrections = call.usage, call.cost, call.corrections
+    research = call.value
     if research is None:
         return CardResult(
-            card.card_id, card.kind, result.status, corrections, usage, cost, error=error
+            card.card_id, card.kind, call.status, corrections, usage, cost, error=call.error
         )
     score = compute_score(
         research,
@@ -345,17 +326,9 @@ def run_card(card: EvalCard, client: LlmClient, registry: CaseRegistry) -> CardR
         corrections,
         usage,
         cost,
-        checks=tuple(_checks(card, research, score, raw)),
+        checks=tuple(_checks(card, research, score, raw[-1])),
         dropped_refs=dropped,
         problems=research.problems + score.contradictions,
-    )
-
-
-def _corrected(request: LlmRequest, error: str) -> LlmRequest:
-    return replace(
-        request,
-        call_id=request.call_id.rsplit(":", 1)[0] + ":2",
-        user=request.user + CORRECTION.format(error=error),
     )
 
 
@@ -447,12 +420,22 @@ def report_markdown(report: EvalReport) -> str:
 
 
 def run_eval(
-    cards: Sequence[EvalCard], client: LlmClient, registry: CaseRegistry, run_on: date
+    cards: Sequence[EvalCard],
+    client: LlmClient,
+    registry: CaseRegistry,
+    run_on: date,
+    on_result: Callable[[int, int, CardResult], None] | None = None,
 ) -> EvalReport:
+    """`on_result(done, total, result)` is called after every card: a live run takes minutes."""
+    results = []
+    for card in cards:
+        results.append(run_card(card, client, registry))
+        if on_result:
+            on_result(len(results), len(cards), results[-1])
     return EvalReport(
         model_id=client.model_id,
         prompt_version=RESEARCH_PROMPT_VERSION,
         run_on=run_on,
-        results=tuple(run_card(card, client, registry) for card in cards),
+        results=tuple(results),
         label_status=tuple(card.label_status for card in cards),
     )

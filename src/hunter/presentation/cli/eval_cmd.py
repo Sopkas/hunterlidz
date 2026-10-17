@@ -41,7 +41,12 @@ def handle(app, args: argparse.Namespace) -> int:
         wanted = {cid.strip() for cid in args.only.split(",") if cid.strip()}
         cards = tuple(card for card in cards if card.card_id in wanted)
     today = date.today()
-    report = run_eval(cards, app.llm, registry, today)
+
+    def progress(done: int, total: int, result) -> None:
+        verdict = "ok" if result.passed else "не прошла"
+        print(f"[{done}/{total}] {result.card_id}: {verdict}", flush=True)
+
+    report = run_eval(cards, app.llm, registry, today, on_result=progress)
     out = Path(args.out or f"docs/eval/research-{today.isoformat()}.md")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(report_markdown(report), encoding="utf-8")
