@@ -7,7 +7,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from sqlalchemy.exc import OperationalError
+from psycopg.errors import InsufficientPrivilege, InvalidSchemaName
+from sqlalchemy.exc import OperationalError, ProgrammingError
 
 from hunter.application.errors import ErrorCode, HunterError
 from hunter.application.ports import IdentityProvider
@@ -37,6 +38,16 @@ class App:
                 ErrorCode.PROVIDER_UNAVAILABLE,
                 f"база данных {self.database_display} не отвечает или отказала во входе. "
                 "Запущена ли она и верны ли логин и пароль? README, раздел «База».",
+            ) from None
+        except ProgrammingError as error:
+            # Only rights and the schema are the operator's to fix; any other error is a bug in
+            # a migration and keeps its traceback (review A on #14).
+            if not isinstance(error.orig, (InsufficientPrivilege, InvalidSchemaName)):
+                raise
+            raise HunterError(
+                ErrorCode.PROVIDER_UNAVAILABLE,
+                f"база данных {self.database_display} отказала в правах: пользователю нужно "
+                "право создавать таблицы в своей схеме. README, раздел «База».",
             ) from None
         finally:
             engine.dispose()
