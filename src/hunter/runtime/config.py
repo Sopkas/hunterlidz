@@ -43,26 +43,37 @@ def parse_utc_offset(raw: str) -> timezone:
         delta = timedelta(hours=int(hours), minutes=int(minutes))
     except ValueError:
         raise ConfigError(f"HUNTER_BUSINESS_UTC_OFFSET: ожидается формат +03:00, получено {raw!r}")
-    if delta > timedelta(hours=14):
+    if not 0 <= int(minutes) < 60 or delta > timedelta(hours=14):
         raise ConfigError(f"HUNTER_BUSINESS_UTC_OFFSET вне диапазона: {raw!r}")
     return timezone(sign * delta)
 
 
 def parse_database_url(raw: str) -> str:
     """Checks the shape only; the URL may hold a password, so it never appears in messages."""
+    shape_error = ConfigError(
+        "HUNTER_DATABASE_URL: ожидается postgresql://пользователь:пароль@хост:порт/база"
+    )
     parts = urlsplit(raw)
-    if parts.scheme not in DATABASE_SCHEMES or not parts.hostname or len(parts.path) < 2:
+    try:
+        parts.port  # non-numeric or out-of-range port raises ValueError
+    except ValueError:
+        raise shape_error from None
+    if "@" in parts.path + parts.query + parts.fragment:
+        # An unencoded '/', '?' or '#' in the password moved it out of netloc.
         raise ConfigError(
-            "HUNTER_DATABASE_URL: ожидается postgresql://пользователь:пароль@хост:порт/база"
+            "HUNTER_DATABASE_URL: закодируйте спецсимволы пароля (/ → %2F, ? → %3F, # → %23)"
         )
+    if parts.scheme not in DATABASE_SCHEMES or not parts.hostname or len(parts.path) < 2:
+        raise shape_error
     return raw
 
 
 def safe_database_url(url: str) -> str:
     """URL for display: credentials removed."""
     parts = urlsplit(url)
+    host = f"[{parts.hostname}]" if ":" in (parts.hostname or "") else parts.hostname
     port = f":{parts.port}" if parts.port else ""
-    return f"{parts.scheme}://{parts.hostname}{port}{parts.path}"
+    return f"{parts.scheme}://{host}{port}{parts.path}"
 
 
 @dataclass(frozen=True, slots=True)
