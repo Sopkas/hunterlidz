@@ -5,6 +5,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 SRC = Path(__file__).resolve().parents[1] / "src"
 
 
@@ -35,3 +37,19 @@ def test_with_settings_runs_and_hides_password(tmp_path):
     assert result.returncode == 0, result.stderr
     assert "localhost:5432/hunter" in result.stdout
     assert "s3cret" not in result.stdout + result.stderr
+
+
+@pytest.mark.parametrize(
+    ("url", "secret"),
+    [
+        ("postgresql://u:123/x@localhost:5432/hunter", "123/x"),
+        ("postgresql://u:p/ss@localhost:5432/hunter", "p/ss"),
+        ("postgresql://u:s3cret@localhost:99999/hunter", "s3cret"),
+    ],
+    ids=["slash-numeric", "slash", "bad-port"],
+)
+def test_bad_url_exits_2_and_hides_password(tmp_path, url, secret):
+    result = run_hunter("config", cwd=tmp_path, extra_env={"HUNTER_DATABASE_URL": url})
+    assert result.returncode == 2, result.stdout + result.stderr
+    assert "HUNTER_DATABASE_URL" in result.stderr
+    assert secret not in result.stdout + result.stderr
