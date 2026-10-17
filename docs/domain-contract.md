@@ -19,7 +19,7 @@
 | `RunMode` | shadow, manual, paused | какие действия разрешены в режиме — S1-08 |
 | `Company` | id, name, version, normalized_domain, industry, size_min, size_max, location, merged_into_id | `id` не пустой; имя не пустое; домен — регистрируемый, ASCII/punycode, нижний регистр, без `www.` и точки в конце; приводит к нему `company_domain` (S1-09); size_min ≤ size_max, не отрицательные; нельзя слиться с собой |
 | `Source` | id, canonical_url, source_type, fetch_status, fetched_at, content_hash, snapshot_ref, error_code | `id` не пустой; абсолютный http(s) URL; полученный источник хранит время и hash и не имеет кода ошибки; неудачный — обязательно с кодом ошибки |
-| `Evidence` | id, company_id, source_id, claim, excerpt, observed_at, event_at, date_precision, verification_status | ID не пустые; утверждение и цитата не пустые; `event_at` пуст ровно тогда, когда точность `unknown`; при `month` — 1-е число, при `year` — 1 января |
+| `Evidence` | id, company_id, source_id, claim, excerpt, observed_at, event_at, date_precision, verification_status, version | ID не пустые; утверждение и цитата не пустые; `event_at` пуст ровно тогда, когда точность `unknown`; при `month` — 1-е число, при `year` — 1 января |
 | `Contact` | id, company_id, channel, normalized_address, version, name, role, source_id, verified_at | ID не пустые; адрес не пустой и без пробелов по краям; канал — `Channel` |
 | `Lead` | id, company_id, campaign_id, stage, version, icp, product, priority, owner_id, next_action_at, loss_reason | ID не пустые; `stage` — только `Stage`; `loss_reason` есть ровно у LOST; `active` — стадия не WON / LOST |
 
@@ -35,6 +35,7 @@
 | 6 | `created_at`, `updated_at` не входят в доменные типы | Это метаданные хранения, их ведёт база (S1-07); `version` в типах есть — она нужна для `expected_version` |
 | 7 | Формат UUID у ID не проверяется в домене | ID создаёт генератор, тип колонки проверяет база (S1-07); домен не зависит от способа генерации |
 | 8 | `RunMode` без `assisted_send` (документ 12) | Адаптера отправки в v0 нет; значение добавляется вместе с ним (H-13) |
+| 16 | `Evidence.version` (КОНТРАКТ, ревью #14) | Документ 10: у изменяемой сущности есть `version`. У факта после создания меняется только `verification_status` — решение оператора, и это идёт с `expected_version`. Утверждение и цитата не меняются: другой текст — новый факт. Колонку добавляет миграция `0002` (зона A). У `Source` версии по-прежнему нет: повторное получение — новая запись источника |
 
 ## Отличия от ветки `claude/H-01-H-11-hunter-v0`
 

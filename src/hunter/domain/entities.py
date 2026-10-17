@@ -145,7 +145,11 @@ class Source:
 
 @dataclass(frozen=True, slots=True)
 class Evidence:
-    """A fact about a company with the excerpt that supports it (FR-04)."""
+    """A fact about a company with the excerpt that supports it (FR-04).
+
+    The operator's decision changes verification_status after creation, so the record has a
+    version for expected_version (doc 10); the claim and the excerpt never change.
+    """
 
     id: str
     company_id: str
@@ -156,6 +160,7 @@ class Evidence:
     event_at: date | None = None
     date_precision: DatePrecision = DatePrecision.UNKNOWN
     verification_status: VerificationStatus = VerificationStatus.UNVERIFIED
+    version: int = 1
 
     def __post_init__(self) -> None:
         for value, name in (
@@ -164,6 +169,7 @@ class Evidence:
             (self.source_id, "source_id"),
         ):
             _id(value, name)
+        _version(self.version)
         _utc(self.observed_at, "observed_at")
         if not self.claim.strip() or not self.excerpt.strip():
             raise ValueError("evidence needs a claim and a non-empty excerpt")
