@@ -17,6 +17,7 @@
 - Scoring документа 04 (`scoring_v1`): один уровень на компонент с причиной, противоречия → проверка; готовность к очереди с жёсткими и мягкими условиями и записанным исключением оператора — `docs/scoring.md` (S2-08).
 - Контракт сообщений: неизменяемые версии с хешем точного payload, согласование на 24 часа к точной версии и адресату, таблица переходов статусов — `docs/messages-contract.md` (S3-01, ждёт Approve обеих зон).
 - Подключение модели (S2-04): OpenAI-совместимый адаптер с нормализованными ошибками, маскировка контактов перед каждым вызовом, настройки тестового периода (OpenRouter, только `:free`, без Gemini, ключ только в окружении), `hunter llm-check`, JSON-схема research_v1.1; ADR-0002 переписан.
+- Eval-набор research (S2-09): 30 синтетических карточек с черновой разметкой, промпт документа 11 (`research_prompt_v1`), прогон с одним исправлением формы и отчёт, команда `hunter eval-research` — `docs/eval-research.md`.
 
 ## Что ещё не сделано
 
@@ -99,3 +100,4 @@
 | 2026-10-18 | S3-01 | B | КОНТРАКТ: `Recipient`, `MessageVersion`, `Approval`, `Message`, `payload_hash`, `check_transition` из `174c737`, приведены к документам 10 и 12 и к S2-03; шесть отклонений записаны | 730 passed (57 новых), ruff чисто (macOS, Python 3.14) | Approve Максима за зону A; хранилище — S3-02 |
 | 2026-10-18 | S3-01 | B | По ревью A на #12: `valid_for` сверяет текущего адресата с снимком версии — правка контакта аннулирует согласование; `fullmatch` в проверках ID и хеша; `expected_version` = `current_version` записано отклонением | 736 passed, ruff чисто (macOS, Python 3.14) | Повторное ревью Максима |
 | 2026-10-18 | S2-04 | B | `infrastructure/llm/openai_compatible.py`, `application/llm_privacy.py`, `application/research_schema.py`, настройки `HUNTER_LLM_*`, команда `llm-check`; ADR-0002 по решению владельца 17.10; мелочи ревью #8 в `_shown` | 945 passed (70 новых), ruff чисто (macOS, Python 3.14). Живой прогон не делался: ключ у владельца | Живой прогон `hunter llm-check` владельцем; промпт и eval — S2-09 |
+| 2026-10-18 | S2-09 | B | `application/prompts.py`, `application/eval_research.py`, `data/eval/research_cards.json` (30 карточек), `hunter eval-research`; T-06 и T-08 — тесты на подставном клиенте | 972 passed (27 новых), ruff чисто (macOS, Python 3.14). Живой прогон не делался | Разметка оператором; живой прогон владельцем |
