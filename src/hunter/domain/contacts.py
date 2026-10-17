@@ -13,7 +13,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from hunter.domain.dedup import UrlError, canonical_url
+from hunter.domain.dedup import SHARED_PLATFORMS, UrlError, canonical_url
 from hunter.domain.entities import Channel
 
 CONTACT_RULES_VERSION = "contacts_v1"
@@ -63,12 +63,19 @@ _DOMAIN_LABEL = re.compile(r"^(?!-)[a-z0-9-]{1,63}(?<!-)$")
 _EMAIL_LOCAL = re.compile(r"^[^\s@<>()\[\],;:\"\\]{1,64}$")
 _NAMED_EMAIL = re.compile(r"<([^<>]+)>\s*$")
 _PHONE_CHARS = re.compile(r"^\+?[\d\s().\-]+$")
-_EXTENSION = re.compile(r"[,;]?\s*(?:доб\.?|добавочный|ext\.?|x|#)\s*(\d{1,6})\s*$", re.IGNORECASE)
+# "доб. 12", "ext 12", "x12", "#12" and the stored RFC 3966 form ";ext=12" itself.
+_EXTENSION = re.compile(
+    r"[,;]?\s*(?:доб\.?|добавочный|ext\s*[.=]?|x|#)\s*(\d{1,6})\s*$", re.IGNORECASE
+)
 _TG_USERNAME = re.compile(r"^[a-z][a-z0-9_]{3,31}$")
 _TG_HOSTS = ("t.me/", "telegram.me/", "telegram.dog/")
 _TG_SERVICE_PATHS = frozenset({"joinchat", "addstickers", "addemoji", "share", "proxy", "c"})
 _SEVERAL = re.compile(r"[,;]|\s/\s|\s(?:и|или|or|and)\s", re.IGNORECASE)
 _WHATSAPP_HOSTS = ("wa.me", "api.whatsapp.com", "whatsapp.com")
+_SINGLE_URL = re.compile(r"^https?://\S+$", re.IGNORECASE)
+# +7 numbers go on with 3, 4, 8, 9 (Russia) or 6, 7 (Kazakhstan); 0, 1 and 2 are not assigned.
+_UNASSIGNED_PLUS_7 = frozenset("012")
+_GMAIL = frozenset({"gmail.com", "googlemail.com"})
 
 
 class AddressError(ValueError):
@@ -148,6 +155,9 @@ def normalize_phone(raw: str) -> str:
         raise AddressError("phone", "no country code and not a Russian number")
     if digits.startswith("7") and len(digits) != 11:
         raise AddressError("phone", "a +7 number has ten digits after the code")
+    if digits.startswith("7") and digits[1] in _UNASSIGNED_PLUS_7:
+        # 8 029 … is a Belarusian number written the Russian way, not +7 029 …
+        raise AddressError("phone", "no +7 number starts with 0, 1 or 2 after the code")
     if not 8 <= len(digits) <= 15 or digits[0] == "0":
         raise AddressError("phone", "not an E.164 number")
     return f"+{digits}{extension}"
@@ -177,6 +187,8 @@ def normalize_telegram(raw: str) -> str:
             segments = [s for s in re.split(r"[/?#]", path[len(host) :], maxsplit=2)[:2] if s]
             if not segments:
                 raise AddressError("telegram", "link has no username")
+            if segments[0].startswith("+") and segments[0][1:].isdigit():
+                return normalize_phone(segments[0])  # t.me/+79161234567 is a user by phone
             if segments[0].startswith("+") or segments[0].lower() in _TG_SERVICE_PATHS:
                 raise AddressError("invite", "invite or message link is not a contact")
             name = segments[1] if segments[0].lower() == "s" and len(segments) > 1 else segments[0]
@@ -211,7 +223,12 @@ def classify_address(raw: str) -> Address:
     splits such a cell or asks the operator.
     """
     value = _clean(raw)
-    if not _NAMED_EMAIL.search(value) and _SEVERAL.search(_EXTENSION.sub("", value)):
+    one_url = _SINGLE_URL.match(value) and value.count("://") == 1  # "?a=1;b=2" is one address
+    if (
+        not one_url
+        and not _NAMED_EMAIL.search(value)
+        and _SEVERAL.search(_EXTENSION.sub("", value))
+    ):
         raise AddressError("several", "several addresses in one value")
     lowered = value.lower()
     if lowered.startswith(("tg://", "@")) or any(
@@ -225,11 +242,35 @@ def classify_address(raw: str) -> Address:
     if "." in value and " " not in value:
         url = normalize_address(Channel.WEB, value)
         host = url.split("://", 1)[1].split("/", 1)[0]
-        if host in _WHATSAPP_HOSTS:
-            # A person's messenger, not the company's web form; the enum has no WhatsApp yet.
+        if host in _WHATSAPP_HOSTS or _on_shared_platform(host):
+            # A person's messenger or a page on vk.com, instagram.com…, not the company's web
+            # form: Channel has no WhatsApp or VK yet (doc 04 contactability, S2-08).
             return Address(Channel.OTHER, url)
         return Address(Channel.WEB, url)
     return Address(Channel.OTHER, value)
+
+
+def _on_shared_platform(host: str) -> bool:
+    return any(host == p or host.endswith("." + p) for p in SHARED_PLATFORMS)
+
+
+def suppression_key(address: Address) -> str:
+    """The key a contact ban is recorded and checked under (T-15, S4-01).
+
+    Broader than normalized_address on purpose: an extra ban costs less than a message to
+    someone who asked not to be contacted. A ban on a number covers all its extensions, and
+    the other way round. A ban on an e-mail covers its +tags, and on Gmail its dots, which
+    Google ignores. Deduplication keeps using normalized_address.
+    """
+    if address.channel is Channel.PHONE:
+        return address.normalized.split(";", 1)[0]
+    if address.channel is Channel.EMAIL:
+        local, _, domain = address.normalized.partition("@")
+        local = local.split("+", 1)[0] or local
+        if domain in _GMAIL:
+            local, domain = local.replace(".", ""), "gmail.com"
+        return f"{local}@{domain}"
+    return address.normalized
 
 
 def is_company_wide(address: Address) -> bool:

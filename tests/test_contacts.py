@@ -11,6 +11,7 @@ from hunter.domain.contacts import (
     normalize_email,
     normalize_phone,
     normalize_telegram,
+    suppression_key,
 )
 from hunter.domain.entities import Channel
 
@@ -273,3 +274,83 @@ def test_suppression_matches_every_spelling():
 )
 def test_company_wide_channels(address, company_wide):
     assert is_company_wide(address) is company_wide
+
+
+# --- review A on #6 ---------------------------------------------------------------------------
+
+IDEMPOTENCE = [
+    (Channel.EMAIL, "Иван Петров <Ivan.Petrov+crm@Пример.РФ>"),
+    (Channel.EMAIL, "mailto:Ivan.Petrov@example.com?subject=Hi"),
+    (Channel.PHONE, "8 (495) 123-45-67"),
+    (Channel.PHONE, "+7 495 123-45-67 доб. 12"),
+    (Channel.PHONE, "8 (495) 123-45-67, ext. 7"),
+    (Channel.PHONE, "+44 20 7946 0958"),
+    (Channel.TELEGRAM, "https://t.me/Ivan_Petrov"),
+    (Channel.TELEGRAM, "t.me/+79161234567"),
+    (Channel.WEB, "www.www.Example.com/contacts/?utm_source=x"),
+    (Channel.OTHER, "  WhatsApp:  +7 999 "),
+]
+
+
+@pytest.mark.parametrize(("channel", "raw"), IDEMPOTENCE)
+def test_normalizing_a_stored_address_gives_the_same_address(channel, raw):
+    # The stored form is normalized again on re-import and when a ban is recorded (T-15).
+    once = normalize_address(channel, raw)
+    assert normalize_address(channel, once) == once
+
+
+@pytest.mark.parametrize("raw", ["+74951234567;ext=12", "tel:+74951234567;ext=12"])
+def test_stored_extension_form_is_accepted(raw):
+    assert normalize_phone(raw) == "+74951234567;ext=12"
+    assert classify_address(raw) == Address(Channel.PHONE, "+74951234567;ext=12")
+
+
+@pytest.mark.parametrize("raw", ["80291234567", "+7 029 123-45-67", "+7 123 456-78-90"])
+def test_unassigned_plus_7_codes_are_rejected(raw):
+    with pytest.raises(AddressError) as error:
+        normalize_phone(raw)
+    assert error.value.code == "phone"
+
+
+def test_kazakhstan_plus_7_numbers_stay():
+    assert normalize_phone("+7 701 123 45 67") == "+77011234567"
+
+
+def test_telegram_link_by_phone_is_a_phone():
+    assert normalize_telegram("https://t.me/+79161234567") == "+79161234567"
+
+
+@pytest.mark.parametrize(
+    "raw", ["vk.com/ivan", "https://instagram.com/shop", "https://www.ozon.ru/seller/alpha"]
+)
+def test_page_on_a_shared_platform_is_not_a_company_web_form(raw):
+    address = classify_address(raw)
+    assert address.channel is Channel.OTHER
+    assert not is_company_wide(address)
+
+
+@pytest.mark.parametrize("raw", ["https://example.com/?a=1;b=2", "https://example.com/a,b"])
+def test_one_url_with_separators_is_one_address(raw):
+    assert classify_address(raw).channel is Channel.WEB
+
+
+def test_two_urls_are_still_several():
+    with pytest.raises(AddressError) as error:
+        classify_address("https://a.ru, https://b.ru")
+    assert error.value.code == "several"
+
+
+def test_ban_on_a_number_covers_its_extensions():
+    main = suppression_key(classify_address("+7 495 123-45-67"))
+    for spelling in ["+7 495 123-45-67 доб. 12", "8 (495) 123-45-67, ext. 7"]:
+        assert suppression_key(classify_address(spelling)) == main
+    # Deduplication still keeps two people behind one switchboard apart.
+    assert classify_address("+7 495 123-45-67 доб. 12") != classify_address("+7 495 123-45-67")
+
+
+def test_ban_on_an_email_covers_tags_and_gmail_dots():
+    banned = suppression_key(classify_address("ivan.petrov@gmail.com"))
+    for spelling in ["IvanPetrov@gmail.com", "ivan.petrov+crm@googlemail.com"]:
+        assert suppression_key(classify_address(spelling)) == banned
+    corporate = suppression_key(classify_address("ivan.petrov+crm@example.com"))
+    assert corporate == "ivan.petrov@example.com"  # dots matter on other servers
