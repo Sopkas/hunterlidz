@@ -329,6 +329,14 @@ def test_hot_with_everything_goes_to_the_queue():
     assert result.eligible and result.blockers == ()
 
 
+def test_only_contact_under_a_ban_leaves_no_contact():
+    # Review A on #11: the caller drops banned contacts, so the lead has nobody to write to.
+    banned = {PERSON.id}
+    allowed = [c for c in [PERSON] if c.id not in banned]
+    result = eligibility(HOT, research(), contacts=allowed, suppressed=False)
+    assert not result.eligible and "нет подтверждённого контакта" in result.blockers
+
+
 def test_t05_hot_without_a_confirmed_contact_is_not_queued():
     result = eligibility(HOT, research(), contacts=[replace(PERSON, verified_at=None)],
                          suppressed=False)  # fmt: skip

@@ -31,7 +31,6 @@ from hunter.domain.entities import Contact, Evidence, SourceType
 from hunter.domain.research import BudgetLevel, ContactLevel, Research
 
 RULES_VERSION = "scoring_v1"
-AUTO_QUEUE_MIN_SCORE = 80  # doc 12 AUTO_QUEUE_MIN_SCORE
 
 COMPONENTS = ("icp_fit", "signal", "problem_fit", "budget", "contactability")
 LEVELS: Mapping[str, tuple[int, ...]] = MappingProxyType(
@@ -121,7 +120,11 @@ def compute_score(
     contacts: Sequence[Contact],
 ) -> Score:
     """`evidence` and `source_types` describe the evidence the research cites (by id);
-    `claims` are case claims by id; `contacts` are the stored contacts of the company."""
+    `claims` are case claims by id; `contacts` are the stored contacts of the company.
+
+    `today` is the business date (HUNTER_BUSINESS_UTC_OFFSET), the same one parse_research got:
+    with two different dates a signal of today would look like a future one and raise.
+    """
     f = research.features
     c: dict[str, int] = {}
     r: dict[str, str] = {}
@@ -199,6 +202,10 @@ def compute_score(
 class OperatorException:
     """A recorded decision of an operator: WARM or a result under review goes to the queue.
 
+    It is given for one score of one research result: a new result or a new score needs a new
+    decision (the use case, S2-10, ties it to them), so an old WARM decision does not let a
+    later result under review through.
+
     It never brings back what parse_research dropped: a fact with an invented evidence id stays
     out (decision of 13.10, T-06). To use such a fact the operator adds a real source and the
     fact goes through the same check.
@@ -230,7 +237,12 @@ def eligibility(
     """Doc 04 standard queue: score ≥ 80, a confirmed contact, a personalization source, a
     fitting offer and no contact ban. WARM and results that need review go only with a recorded
     operator exception; WATCH and SKIP never enter the message queue. HOT alone is never
-    enough (T-05)."""
+    enough (T-05).
+
+    `contacts` are the contacts that may be written to: the caller leaves out contacts under a
+    ban (suppression_key, S1-13). `suppressed` is a ban on the whole company. The ≥ 80 threshold
+    is HOT in priority_for (doc 12 AUTO_QUEUE_MIN_SCORE equals it in v1).
+    """
     hard: list[str] = []
     if suppressed:
         hard.append("запрет контакта")
