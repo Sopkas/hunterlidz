@@ -1,0 +1,112 @@
+{
+  "schema_version": "research_v1.1",
+  "company_id": "c-alpha",
+  "lead_id": "l-alpha",
+  "icp": "existing_business",
+  "summary": "Сеть из 12 автосервисов в Москве и области; открыла два филиала за год.",
+  "facts": [
+    {
+      "text": "Сеть насчитывает 12 сервисов",
+      "evidence_ids": [
+        "E1"
+      ]
+    },
+    {
+      "text": "Открыты филиалы в Химках и Мытищах",
+      "evidence_ids": [
+        "E1",
+        "E2"
+      ]
+    }
+  ],
+  "signals": [
+    {
+      "type": "expansion",
+      "text": "Открытие филиала в Мытищах",
+      "evidence_ids": [
+        "E2"
+      ],
+      "event_date": "2026-09-14",
+      "date_precision": "day"
+    },
+    {
+      "type": "hiring",
+      "text": "Ищут CRM-администратора",
+      "evidence_ids": [
+        "E3"
+      ],
+      "event_date": "2026-08-20",
+      "date_precision": "month"
+    }
+  ],
+  "problem_hypothesis": "Запись клиентов и загрузка постов ведутся вручную в каждом филиале.",
+  "validation_question": "Как вы сейчас распределяете записи между филиалами?",
+  "recommended_product": "business_automation",
+  "relevant_case_claim_ids": [
+    "auto_crm.experience:v1"
+  ],
+  "scoring_inputs": {
+    "segment_match": {
+      "value": true,
+      "evidence_ids": [
+        "E1"
+      ],
+      "explanation": "Действующий бизнес, 12 точек"
+    },
+    "task_match": {
+      "value": true,
+      "evidence_ids": [
+        "E3"
+      ],
+      "explanation": "Ищут человека под CRM"
+    },
+    "scale_match": {
+      "value": true,
+      "evidence_ids": [
+        "E1"
+      ],
+      "explanation": "12 сервисов — в диапазоне 20–500 сотрудников"
+    },
+    "current_need_confirmed": {
+      "value": true,
+      "evidence_ids": [
+        "E3"
+      ],
+      "explanation": "Открытая вакансия"
+    },
+    "problem_confirmed": {
+      "value": null,
+      "evidence_ids": [],
+      "explanation": "Ручную запись не подтвердили"
+    },
+    "relevant_case_confirmed": {
+      "value": true,
+      "evidence_ids": [
+        "auto_crm.experience:v1"
+      ],
+      "explanation": "Наш кейс CRM для автобизнеса"
+    },
+    "budget_evidence_level": {
+      "value": "indirect",
+      "evidence_ids": [
+        "E2"
+      ],
+      "explanation": "Открывают филиалы"
+    },
+    "contact_level": {
+      "value": "company_channel",
+      "evidence_ids": [
+        "E1"
+      ],
+      "explanation": "Общая форма на сайте"
+    }
+  },
+  "missing_data": [
+    "Кто отвечает за операционные процессы"
+  ],
+  "offer": {
+    "what_we_sell": "Первый этап Business Automation: запись и загрузка постов в одной системе",
+    "why": "Сеть растёт, вакансия CRM-администратора говорит о текущей потребности; у нас есть CRM для автобизнеса"
+  },
+  "needs_review": false
+}
