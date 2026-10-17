@@ -1,0 +1,133 @@
+{
+  "cases": [
+    {
+      "case_key": "careermate",
+      "title": "CareerMate",
+      "mention": {
+        "phrases": [
+          "careermate"
+        ]
+      },
+      "not_confirmed": [
+        "конкурс*",
+        "топ-50",
+        "минобрнауки",
+        "стартап как диплом"
+      ]
+    },
+    {
+      "case_key": "couples_app",
+      "title": "Приложение для пар",
+      "mention": {
+        "phrases": [
+          "приложение для пар",
+          "приложения для пар",
+          "приложению для пар",
+          "приложением для пар",
+          "приложении для пар"
+        ]
+      }
+    },
+    {
+      "case_key": "auto_crm",
+      "title": "CRM для автомобильного бизнеса",
+      "mention": {
+        "phrases": [
+          "crm для автосервисов",
+          "crm для автосалонов",
+          "crm для автомобильного бизнеса",
+          "crm для автобизнеса"
+        ]
+      }
+    },
+    {
+      "case_key": "claims_assistant",
+      "title": "Помощник претензионщика",
+      "mention": {
+        "objects": [
+          "помощник",
+          "ассистент",
+          "бот",
+          "сервис",
+          "инструмент",
+          "продукт",
+          "mvp"
+        ],
+        "topics": [
+          "претенз",
+          "взыскан",
+          "должник",
+          "дебитор",
+          "задолженност"
+        ]
+      },
+      "not_confirmed": [
+        "excel",
+        "эксел*",
+        "инн",
+        "checko",
+        "чекко",
+        "отчет*",
+        "расчет*",
+        "ai-анализ*",
+        "ии-анализ*"
+      ]
+    }
+  ],
+  "claims": [
+    {
+      "claim_key": "careermate.launch",
+      "case_key": "careermate",
+      "claim_text": "В CareerMate прошли путь от идеи до запуска AI-продукта",
+      "status": "owner_reported",
+      "external_allowed": true,
+      "source_ref": "05-outbound-and-follow-up.md, первое сообщение: founder",
+      "approved_by": null
+    },
+    {
+      "claim_key": "careermate.about",
+      "case_key": "careermate",
+      "claim_text": "CareerMate — AI-платформа карьерной аналитики для оценки рыночной стоимости специалиста и адаптации резюме под целевые вакансии",
+      "status": "owner_reported",
+      "external_allowed": true,
+      "source_ref": "01-company-and-cases.md, кейс 1; конкурсное достижение не включено до проверки первоисточника",
+      "approved_by": null
+    },
+    {
+      "claim_key": "couples_app.scope",
+      "case_key": "couples_app",
+      "claim_text": "Сделали приложение для пар: web, Telegram, продуктовая логика, UX/UI и backend",
+      "status": "owner_reported",
+      "external_allowed": true,
+      "source_ref": "01-company-and-cases.md, кейс 2, состав; формулировку составил разработчик, срок не включён",
+      "approved_by": null
+    },
+    {
+      "claim_key": "auto_crm.experience",
+      "case_key": "auto_crm",
+      "claim_text": "У нас есть опыт разработки CRM для автомобильного бизнеса",
+      "status": "owner_reported",
+      "external_allowed": true,
+      "source_ref": "05-outbound-and-follow-up.md, первое сообщение: действующий бизнес",
+      "approved_by": null
+    },
+    {
+      "claim_key": "auto_crm.built",
+      "case_key": "auto_crm",
+      "claim_text": "Мы разрабатывали CRM для автомобильного бизнеса",
+      "status": "owner_reported",
+      "external_allowed": true,
+      "source_ref": "sales-playbook-v1.md, §10, без «недавно» и «именно»: период работ не подтверждён",
+      "approved_by": null
+    },
+    {
+      "claim_key": "claims_assistant.status",
+      "case_key": "claims_assistant",
+      "claim_text": "Разрабатываем помощника для приоритизации проверки должников. Сейчас реализована оболочка Telegram-бота; обработка данных, интеграции и аналитика находятся в разработке.",
+      "status": "planned",
+      "external_allowed": true,
+      "source_ref": "01-company-and-cases.md, кейс 4, допустимая формулировка",
+      "approved_by": null
+    }
+  ]
+}

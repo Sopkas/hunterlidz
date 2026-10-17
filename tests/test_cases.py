@@ -1,4 +1,9 @@
-"""Case claims registry and the approved-wording rule. (S2-03, T-07)"""
+"""Case claims registry and the approved-wording rule. (S2-03, T-07)
+
+The rules are tested on a fixed registry, tests/fixtures/case_claims_rules.json, which keeps a
+planned case and unconfirmed markers: the real data/case_claims.json changes with the business
+(17.10 all four cases are done) and is checked separately at the end of this file.
+"""
 
 from __future__ import annotations
 
@@ -21,8 +26,9 @@ from hunter.domain.cases import (
     registry_from_mapping,
 )
 
-REGISTRY_FILE = Path(__file__).resolve().parents[1] / "data" / "case_claims.json"
-FILE_REGISTRY = registry_from_mapping(json.loads(REGISTRY_FILE.read_text(encoding="utf-8")))
+RULES_FILE = Path(__file__).resolve().parent / "fixtures" / "case_claims_rules.json"
+DATA_FILE = Path(__file__).resolve().parents[1] / "data" / "case_claims.json"
+FILE_REGISTRY = registry_from_mapping(json.loads(RULES_FILE.read_text(encoding="utf-8")))
 # The file holds proposals; tests work with the same wordings as if the owner approved them.
 REGISTRY = CaseRegistry(
     cases=FILE_REGISTRY.cases,
@@ -352,23 +358,10 @@ def test_normalize_text():
 # --- Registry -----------------------------------------------------------------------------
 
 
-def test_registry_file_matches_doc_01_and_waits_for_approval():
-    assert {case.case_key for case in FILE_REGISTRY.cases} == {
-        "careermate",
-        "couples_app",
-        "auto_crm",
-        "claims_assistant",
-    }
+def test_rules_fixture_keeps_a_planned_case():
     planned = [c for c in FILE_REGISTRY.claims if c.status is ClaimStatus.PLANNED]
     assert [c.id for c in planned] == ["claims_assistant.status:v1"]
-    assert planned[0].claim_text == (
-        "Разрабатываем помощника для приоритизации проверки должников. Сейчас реализована "
-        "оболочка Telegram-бота; обработка данных, интеграции и аналитика находятся в разработке."
-    )
-    assert all(claim.source_ref for claim in FILE_REGISTRY.claims)
-    # Nobody has approved the wordings yet, so none of them may be used in a message.
-    assert not any(claim.usable_in_messages for claim in FILE_REGISTRY.claims)
-    assert "конкурс" not in " ".join(c.claim_text for c in FILE_REGISTRY.claims).lower()
+    assert ASSISTANT.status is ClaimStatus.PLANNED
 
 
 @pytest.mark.parametrize(
@@ -538,3 +531,101 @@ def test_claim_versions_give_distinct_ids():
 def test_case_without_markers_is_allowed_for_done_claims():
     registry = registry_from_mapping({"cases": [{"case_key": "x"}], "claims": [CLAIM]})
     assert registry.cases[0].mention.is_empty
+
+
+# --- The real registry, data/case_claims.json -------------------------------------------------
+
+DATA = registry_from_mapping(json.loads(DATA_FILE.read_text(encoding="utf-8")))
+APPROVED_DATA = CaseRegistry(
+    cases=DATA.cases,
+    claims=tuple(dataclasses.replace(claim, approved_by="owner") for claim in DATA.claims),
+)
+DATA_BY_KEY = {claim.claim_key: claim for claim in APPROVED_DATA.claims}
+
+
+def test_data_registry_has_four_done_cases_with_sources():
+    assert {case.case_key for case in DATA.cases} == {
+        "careermate",
+        "couples_app",
+        "auto_crm",
+        "claims_assistant",
+    }
+    # Owner, 17.10: the claims assistant is finished, no case is planned any more.
+    assert all(claim.status is ClaimStatus.OWNER_REPORTED for claim in DATA.claims)
+    assert all(claim.source_ref for claim in DATA.claims)
+    assert all(claim.external_allowed for claim in DATA.claims)
+
+
+def test_contest_claim_keeps_its_primary_source():
+    # Doc 01: the contest result is used externally only with the publication attached.
+    award = DATA_BY_KEY["careermate.award"]
+    assert "https://" in award.source_ref
+    assert "20-е место" in award.claim_text
+
+
+def test_data_registry_names_no_customer():
+    # Every customer is under NDA: wordings name the industry, never the company.
+    text = " ".join(claim.claim_text for claim in DATA.claims).lower()
+    assert "заказчик" not in text.replace("задачу заказчика", "")
+    assert "«" not in text.replace("«стартап как диплом»", "")
+
+
+@pytest.mark.parametrize("claim_key", sorted(DATA_BY_KEY))
+def test_every_data_wording_passes_alone(claim_key):
+    claim = DATA_BY_KEY[claim_key]
+    text = f"{GREETING} {claim.claim_text}. {QUESTION}"
+    assert check_case_text(text, registry=APPROVED_DATA, attached_ids=[claim.id]) == ()
+
+
+@pytest.mark.parametrize(
+    ("text", "claim_key"),
+    [
+        (
+            "Здравствуйте, Иван! Увидел, что вы открыли второй автосервис. У нас есть опыт "
+            "разработки CRM для автомобильного бизнеса, поэтому стало интересно, как у вас "
+            "устроены запись и распределение заявок между мастерами?",
+            "auto_crm.experience",
+        ),
+        (
+            "Здравствуйте, Анна! Видел ваш запуск на Product Hunt. В CareerMate прошли путь от "
+            "идеи до запуска AI-продукта, поэтому интересно, что сейчас мешает вам расти?",
+            "careermate.launch",
+        ),
+        (
+            "Здравствуйте, Анна! Мы сделали и сдали сервис для оценки и приоритизации должников: "
+            "он проверяет как одну компанию, так и сразу пачку, принимает данные о долгах и "
+            "переговорах и показывает, с кем работать в первую очередь. Как у вас сейчас "
+            "устроена работа с дебиторкой?",
+            "claims_assistant.scope",
+        ),
+    ],
+    ids=["doc-05-existing-business", "doc-05-founder", "debtors-service"],
+)
+def test_data_templates_pass(text, claim_key):
+    claim = DATA_BY_KEY[claim_key]
+    assert check_case_text(text, registry=APPROVED_DATA, attached_ids=[claim.id]) == ()
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Наш сервис для оценки должников уже сэкономил клиенту сотни часов.",
+        "Делали CRM для автосервисов с онлайн-оплатой.",
+        "CareerMate — лучший карьерный сервис в России.",
+    ],
+    ids=["unmeasured-savings", "paraphrased-crm", "careermate-superlative"],
+)
+def test_data_registry_still_blocks_free_text_about_cases(text):
+    assert check_case_text(f"{GREETING} {text}", registry=APPROVED_DATA) != ()
+
+
+def test_unmeasured_savings_blocked_next_to_the_quoted_service():
+    claim = DATA_BY_KEY["claims_assistant.monitoring"]
+    text = f"{claim.claim_text}. Это экономит юристам часы каждый день."
+    found = check_case_text(text, registry=APPROVED_DATA, attached_ids=[claim.id])
+    assert ViolationCode.NOT_CONFIRMED in {v.code for v in found}
+
+
+def test_data_wordings_wait_for_owner_approval():
+    # The owner approved the content on 17.10; the exact texts are approved one by one.
+    assert not any(claim.usable_in_messages for claim in DATA.claims)

@@ -7,13 +7,7 @@
         "phrases": [
           "careermate"
         ]
-      },
-      "not_confirmed": [
-        "конкурс*",
-        "топ-50",
-        "минобрнауки",
-        "стартап как диплом"
-      ]
+      }
     },
     {
       "case_key": "couples_app",
@@ -42,7 +36,7 @@
     },
     {
       "case_key": "claims_assistant",
-      "title": "Помощник претензионщика",
+      "title": "Сервис оценки и приоритизации должников",
       "mention": {
         "objects": [
           "помощник",
@@ -51,7 +45,8 @@
           "сервис",
           "инструмент",
           "продукт",
-          "mvp"
+          "mvp",
+          "систем"
         ],
         "topics": [
           "претенз",
@@ -62,19 +57,48 @@
         ]
       },
       "not_confirmed": [
-        "excel",
-        "эксел*",
-        "инн",
-        "checko",
-        "чекко",
-        "отчет*",
-        "расчет*",
-        "ai-анализ*",
-        "ии-анализ*"
+        "экономи*",
+        "сэконом*"
       ]
     }
   ],
   "claims": [
+    {
+      "claim_key": "careermate.about",
+      "case_key": "careermate",
+      "claim_text": "CareerMate — наша AI-платформа карьерной аналитики: она оценивает рыночную стоимость специалиста и адаптирует резюме под конкретные вакансии",
+      "status": "owner_reported",
+      "external_allowed": true,
+      "source_ref": "01-company-and-cases.md, кейс 1; владелец, 17.10",
+      "approved_by": null
+    },
+    {
+      "claim_key": "careermate.full_cycle",
+      "case_key": "careermate",
+      "claim_text": "CareerMate мы сделали полностью сами: примерно за год прошли путь от идеи и проектирования до запуска и первых клиентов",
+      "status": "owner_reported",
+      "external_allowed": true,
+      "source_ref": "владелец, 17.10: «около года, от идеи до получения клиентов»",
+      "approved_by": null
+    },
+    {
+      "claim_key": "careermate.tech",
+      "case_key": "careermate",
+      "claim_text": "Под капотом CareerMate — множество интеграций, собственные математические модели оценки и ранжирования и самописные векторные инструменты",
+      "status": "owner_reported",
+      "external_allowed": true,
+      "source_ref": "владелец, 17.10",
+      "approved_by": null
+    },
+    {
+      "claim_key": "careermate.award",
+      "case_key": "careermate",
+      "claim_text": "CareerMate занял 20-е место в ТОП-50 Всероссийского конкурса «Стартап как диплом» Минобрнауки России в 2026 году",
+      "status": "owner_reported",
+      "external_allowed": true,
+      "source_ref": "01-company-and-cases.md, кейс 1; первоисточник от владельца 17.10: https://rmpvo.ru/feedback/contest/",
+      "approved_by": null
+    },
     {
       "claim_key": "careermate.launch",
       "case_key": "careermate",
@@ -82,24 +106,6 @@
       "status": "owner_reported",
       "external_allowed": true,
       "source_ref": "05-outbound-and-follow-up.md, первое сообщение: founder",
-      "approved_by": null
-    },
-    {
-      "claim_key": "careermate.about",
-      "case_key": "careermate",
-      "claim_text": "CareerMate — AI-платформа карьерной аналитики для оценки рыночной стоимости специалиста и адаптации резюме под целевые вакансии",
-      "status": "owner_reported",
-      "external_allowed": true,
-      "source_ref": "01-company-and-cases.md, кейс 1; конкурсное достижение не включено до проверки первоисточника",
-      "approved_by": null
-    },
-    {
-      "claim_key": "couples_app.scope",
-      "case_key": "couples_app",
-      "claim_text": "Сделали приложение для пар: web, Telegram, продуктовая логика, UX/UI и backend",
-      "status": "owner_reported",
-      "external_allowed": true,
-      "source_ref": "01-company-and-cases.md, кейс 2, состав; формулировку составил разработчик, срок не включён",
       "approved_by": null
     },
     {
@@ -112,6 +118,24 @@
       "approved_by": null
     },
     {
+      "claim_key": "auto_crm.scope",
+      "case_key": "auto_crm",
+      "claim_text": "Мы разработали полноценную CRM для автомобильного бизнеса: через неё автосалон вёл закупки, учёт и продажу автомобилей, ремонт и отслеживание доставки",
+      "status": "owner_reported",
+      "external_allowed": true,
+      "source_ref": "владелец, 17.10",
+      "approved_by": null
+    },
+    {
+      "claim_key": "auto_crm.tech",
+      "case_key": "auto_crm",
+      "claim_text": "В CRM для автомобильного бизнеса мы заложили модель приоритизации закупок, а бэкенд построили на микросервисах на Go",
+      "status": "owner_reported",
+      "external_allowed": true,
+      "source_ref": "владелец, 17.10",
+      "approved_by": null
+    },
+    {
       "claim_key": "auto_crm.built",
       "case_key": "auto_crm",
       "claim_text": "Мы разрабатывали CRM для автомобильного бизнеса",
@@ -121,12 +145,48 @@
       "approved_by": null
     },
     {
-      "claim_key": "claims_assistant.status",
-      "case_key": "claims_assistant",
-      "claim_text": "Разрабатываем помощника для приоритизации проверки должников. Сейчас реализована оболочка Telegram-бота; обработка данных, интеграции и аналитика находятся в разработке.",
-      "status": "planned",
+      "claim_key": "couples_app.scope",
+      "case_key": "couples_app",
+      "claim_text": "Под задачу заказчика сделали приложение для пар, которое помогает выстраивать отношения: Telegram-приложение с LLM-функциями и собственный лендинг, дизайн и разработка полностью наши",
+      "status": "owner_reported",
       "external_allowed": true,
-      "source_ref": "01-company-and-cases.md, кейс 4, допустимая формулировка",
+      "source_ref": "01-company-and-cases.md, кейс 2; владелец, 17.10",
+      "approved_by": null
+    },
+    {
+      "claim_key": "couples_app.speed",
+      "case_key": "couples_app",
+      "claim_text": "Приложение для пар мы запустили примерно за две недели",
+      "status": "owner_reported",
+      "external_allowed": true,
+      "source_ref": "01-company-and-cases.md, кейс 2: «Срок разработки: около двух недель»; срок относится к этому кейсу, не обещание для нового MVP",
+      "approved_by": null
+    },
+    {
+      "claim_key": "claims_assistant.scope",
+      "case_key": "claims_assistant",
+      "claim_text": "Мы сделали и сдали сервис для оценки и приоритизации должников: он проверяет как одну компанию, так и сразу пачку, принимает данные о долгах и переговорах и показывает, с кем работать в первую очередь",
+      "status": "owner_reported",
+      "external_allowed": true,
+      "source_ref": "владелец, 17.10: проект завершён и сдан",
+      "approved_by": null
+    },
+    {
+      "claim_key": "claims_assistant.monitoring",
+      "case_key": "claims_assistant",
+      "claim_text": "Сервис для оценки должников каждый день сам собирает данные по загруженным компаниям и присылает пользователю сводку и отчёт о том, что изменилось",
+      "status": "owner_reported",
+      "external_allowed": true,
+      "source_ref": "владелец, 17.10",
+      "approved_by": null
+    },
+    {
+      "claim_key": "claims_assistant.features",
+      "case_key": "claims_assistant",
+      "claim_text": "Сервис для оценки должников работает с ИНН и Excel-файлами, подтягивает данные из Checko, делает AI-анализ и выдаёт итоговый Excel-отчёт",
+      "status": "owner_reported",
+      "external_allowed": true,
+      "source_ref": "01-company-and-cases.md, кейс 4, целевой функционал; владелец, 17.10: «всё сделано, абсолютно всё, проект сдан»",
       "approved_by": null
     }
   ]
