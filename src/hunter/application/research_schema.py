@@ -48,11 +48,12 @@ def _object(properties: dict[str, Any]) -> dict[str, Any]:
 
 
 def _enum(values: list[Any]) -> dict[str, Any]:
-    """Strict providers (OpenAI, Azure) want a type next to every enum; null rides as a type."""
-    types = sorted(
-        {"null" if v is None else "boolean" if isinstance(v, bool) else "string" for v in values}
-    )
-    return {"type": types[0] if len(types) == 1 else types, "enum": values}
+    """Strict providers want a type next to every enum (OpenAI, Azure) and reject an enum under
+    a list of types (Anthropic): a nullable enum is anyOf a string enum and null (polza.ai, 19.10).
+    """
+    options = [value for value in values if value is not None]
+    typed = {"type": "string", "enum": options}
+    return {"anyOf": [typed, {"type": "null"}]} if None in values else typed
 
 
 def _feature(value: dict[str, Any]) -> dict[str, Any]:

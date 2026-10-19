@@ -457,14 +457,22 @@ def _fields(node):
 
 
 def test_every_field_has_a_type():
-    # OpenAI and Azure reject a strict schema with a bare enum or const (polza.ai, 19.10):
-    # "schema must have a 'type' key".
+    # Strict providers on polza.ai (19.10): OpenAI and Azure reject a bare enum or const
+    # ("schema must have a 'type' key"), Anthropic rejects an enum under a list of types.
     for name, field in _fields(research_json_schema()):
-        assert "type" in field, name
         assert "const" not in field, name
-        for value in field.get("enum", []):
-            kind = {str: "string", bool: "boolean", type(None): "null"}[type(value)]
-            assert kind in (field["type"] if isinstance(field["type"], list) else [field["type"]])
+        branches = field.get("anyOf", [field])
+        for branch in branches:
+            assert isinstance(branch.get("type"), str) or "enum" not in branch, name
+            assert "type" in branch, name
+            for value in branch.get("enum", []):
+                assert isinstance(value, str) and branch["type"] == "string", name
+
+
+def test_nullable_enum_accepts_null_and_values():
+    product = research_json_schema()["properties"]["recommended_product"]
+    assert product["anyOf"][1] == {"type": "null"}
+    assert "mvp_launch" in product["anyOf"][0]["enum"]
 
 
 def test_schema_lists_every_feature():
