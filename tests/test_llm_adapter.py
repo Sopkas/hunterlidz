@@ -97,6 +97,14 @@ def test_json_object_mode_for_models_without_schemas():
     transport = FakeTransport(answer('{"ok": true}'))
     client(transport, structured="json_object").complete_json(REQUEST)
     assert transport.calls[0][2]["response_format"] == {"type": "json_object"}
+    system = transport.calls[0][2]["messages"][0]["content"]
+    assert system.startswith("Правила") and '"type": "object"' in system
+
+
+def test_json_schema_mode_keeps_the_system_message():
+    transport = FakeTransport(answer('{"ok": "да"}'))
+    client(transport).complete_json(REQUEST)
+    assert transport.calls[0][2]["messages"][0]["content"] == "Правила"
 
 
 # --- Success ------------------------------------------------------------------------------
