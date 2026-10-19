@@ -12,6 +12,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from hunter.application.errors import HunterError
 from hunter.application.eval_research import (
     CardError,
     EvalCard,
@@ -141,7 +142,7 @@ def test_cards_are_synthetic_and_labelled_with_a_reason():
     for card in CARDS:
         assert str(card.company["site"]).endswith(".example")
         assert all(".example/" in e.url for e in card.evidence)
-        assert card.label_status.startswith("разметка агента v1")
+        assert card.label_status.startswith("разметка агента v2")
     assert all(RAW[card.card_id]["label"]["rationale"] for card in CARDS)
 
 
@@ -177,6 +178,18 @@ def test_prompt_follows_doc_11_and_is_versioned():
     assert "auto_crm.experience:v1: У нас есть опыт разработки CRM" in sent.user
     assert '"""Сеть «Автодом Сервис» открыла' in sent.user
     assert sent.schema["properties"]["schema_version"]["enum"] == ["research_v1.1"]
+    assert sent.max_output_tokens == 3000
+
+
+def test_prompt_v3_spells_out_the_owner_rules_of_19_10():
+    # A vacancy is not an order for us; scale must be in the sources; hiring is indirect budget.
+    request = Scripted(lambda c, n: oracle_answer(c))
+    run_card(BY_ID["fnd-01"], request, REGISTRY)
+    user = request.requests[0].user
+    assert RESEARCH_PROMPT_VERSION == "research_prompt_v3"
+    assert "Вакансия в штат" in user and "problem_confirmed = null" in user
+    assert "Профиль импорта масштабом не считается" in user
+    assert "найм,\n  акселератор" in user or "найм, акселератор" in user.replace("\n  ", " ")
 
 
 def test_source_text_cannot_close_its_quote():
@@ -314,7 +327,7 @@ def test_score_check_names_the_components_that_differ_from_the_label():
         result["scoring_inputs"]["budget_evidence_level"]["evidence_ids"] = []
         return result
 
-    result = run_card(BY_ID["fnd-01"], Scripted(answer), REGISTRY)
+    result = run_card(BY_ID["fnd-05"], Scripted(answer), REGISTRY)
     score = next(c for c in result.checks if c.name == "score")
     assert not score.passed
     assert "problem_fit 10 (в разметке 20), budget 0 (в разметке 5)" in score.detail
@@ -345,7 +358,10 @@ def test_cli_writes_the_report(tmp_path, monkeypatch, capsys):
     out = tmp_path / "report.md"
     app = SimpleNamespace(llm=Scripted(lambda c, n: oracle_answer(c)))
     args = SimpleNamespace(
-        cards=str(ROOT / "data/eval/research_cards.json"), out=str(out), only=None
+        cards=str(ROOT / "data/eval/research_cards.json"),
+        out=str(out),
+        only=None,
+        max_output_tokens=3000,
     )
     assert eval_cmd.handle(app, args) == 0
     assert "Все проверки пройдены: 30 из 30" in out.read_text("utf-8")
@@ -361,6 +377,22 @@ def test_cli_can_run_a_few_cards(tmp_path, monkeypatch):
         cards=str(ROOT / "data/eval/research_cards.json"),
         out=str(tmp_path / "r.md"),
         only="hrd-04,biz-01",
+        max_output_tokens=8000,
     )
     eval_cmd.handle(SimpleNamespace(llm=client), args)
     assert len(client.requests) == 2
+    assert {r.max_output_tokens for r in client.requests} == {8000}
+    assert "лимит ответа: 8000 токенов" in (tmp_path / "r.md").read_text("utf-8")
+
+
+@pytest.mark.parametrize("limit", [100, 50000])
+def test_cli_rejects_an_odd_output_limit(tmp_path, monkeypatch, limit):
+    monkeypatch.chdir(ROOT)
+    args = SimpleNamespace(
+        cards=str(ROOT / "data/eval/research_cards.json"),
+        out=str(tmp_path / "r.md"),
+        only=None,
+        max_output_tokens=limit,
+    )
+    with pytest.raises(HunterError):
+        eval_cmd.handle(SimpleNamespace(llm=Scripted(lambda c, n: oracle_answer(c))), args)

@@ -23,7 +23,7 @@ from hunter.application.llm import LlmRequest
 from hunter.application.research_schema import research_json_schema
 from hunter.domain.cases import CaseClaim
 
-RESEARCH_PROMPT_VERSION = "research_prompt_v2"
+RESEARCH_PROMPT_VERSION = "research_prompt_v3"
 ICP_VERSION = "icp_v1"  # doc 03, «Три исходных сегмента»
 RESEARCH_MAX_OUTPUT_TOKENS = 3000  # doc 09 budget per run, doc 12 RESEARCH_MAX_OUTPUT_TOKENS
 
@@ -91,6 +91,14 @@ RESEARCH_TEMPLATE = """\
   ошибка.
 - scoring_inputs: признак true ставь только со ссылкой evidence_ids на то, что его
   подтверждает; без ссылки признак — null.
+- problem_confirmed: true, только если компания сама ищет внешнего исполнителя под то,
+  что мы делаем (подрядчика, студию, команду, партнёра, сервис, субподряд), или выиграла
+  тендер, под который нужна разработка. Вакансия в штат, описание ручного процесса или
+  названная боль — гипотеза: problem_confirmed = null.
+- scale_match: true, только если масштаб виден в evidence: число филиалов, клиентов,
+  проектов, заявок, сотрудников или срок задачи. Профиль импорта масштабом не считается.
+- budget_evidence_level: грант, раунд или выигранный тендер — directional_spend; найм,
+  акселератор, новые филиалы или поиск подрядчика — indirect; иначе unknown.
 - Если ICP unknown, recommended_product и offer — null.
 - Если источники противоречат друг другу, needs_review = true и опиши противоречие
   в missing_data.
@@ -137,8 +145,11 @@ def build_research_request(
     company_profile: dict,
     evidence: Sequence[EvidenceItem],
     claims: Sequence[CaseClaim],
+    max_output_tokens: int = RESEARCH_MAX_OUTPUT_TOKENS,
 ) -> LlmRequest:
-    """`claims` are the usable claims of the registry (approved, external, not withdrawn)."""
+    """`claims` are the usable claims of the registry (approved, external, not withdrawn).
+    `max_output_tokens`: reasoning models spend 2–4 thousand tokens before the answer and need
+    more than the default (eval runs of 19.10)."""
     user = RESEARCH_TEMPLATE.format(
         company_id=company_id,
         lead_id=lead_id,
@@ -156,5 +167,5 @@ def build_research_request(
         system=SYSTEM_INSTRUCTION,
         user=user,
         schema=research_json_schema(),
-        max_output_tokens=RESEARCH_MAX_OUTPUT_TOKENS,
+        max_output_tokens=max_output_tokens,
     )

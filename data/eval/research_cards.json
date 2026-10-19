@@ -1,12 +1,12 @@
 {
  "version": "eval_research_v1",
  "as_of": "2026-10-18",
- "note": "Синтетические карточки: компании, люди и сайты вымышлены (.example). Разметка v1 — агент по правилам документа 04: признаки по источникам, score посчитан hunter.domain.scoring, диапазон ±10. Проверяет владелец (оператор пилота); спорные вопросы — docs/eval-research.md.",
+ "note": "Синтетические карточки: компании, люди и сайты вымышлены (.example). Разметка v2 — агент по правилам документа 04: признаки по источникам, score посчитан hunter.domain.scoring, диапазон ±10. Проверяет владелец (оператор пилота); спорные вопросы — docs/eval-research.md.",
  "cards": [
   {
    "card_id": "fnd-01",
    "kind": "founders",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Лунокод",
@@ -46,8 +46,8 @@
      "E1",
      "E2"
     ],
-    "score_min": 75,
-    "score_max": 95,
+    "score_min": 65,
+    "score_max": 85,
     "unknowns": [
      "бюджет"
     ],
@@ -58,21 +58,21 @@
     "canary": null
    },
    "label": {
-    "expected_score": 85,
-    "priority": "HOT",
+    "expected_score": 75,
+    "priority": "WARM",
     "components": {
      "icp_fit": 25,
      "signal": 30,
-     "problem_fit": 20,
+     "problem_fit": 10,
      "budget": 5,
      "contactability": 5
     },
-    "rationale": "Стартап в акселераторе ищет CTO под первую версию: задача MVP подтверждена, свежий сигнал, бюджет — только косвенно (акселератор).",
+    "rationale": "Стартап в акселераторе ищет CTO в штат под первую версию к весне: это найм, а не заказ на наш продукт — задача гипотеза (10, владелец 19.10). Сроки видны — масштаб есть; акселератор и найм — косвенный бюджет.",
     "features": {
      "segment_match": "E1",
      "task_match": "E2",
      "scale_match": "E2",
-     "problem_confirmed": "E2",
+     "problem_confirmed": null,
      "relevant_case_confirmed": "careermate.launch:v1",
      "budget_evidence_level": "indirect"
     }
@@ -81,7 +81,7 @@
   {
    "card_id": "fnd-02",
    "kind": "founders",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Тихий Сад",
@@ -121,8 +121,8 @@
      "E1",
      "E2"
     ],
-    "score_min": 65,
-    "score_max": 85,
+    "score_min": 60,
+    "score_max": 80,
     "unknowns": [
      "бюджет"
     ],
@@ -133,20 +133,20 @@
     "canary": null
    },
    "label": {
-    "expected_score": 75,
+    "expected_score": 70,
     "priority": "WARM",
     "components": {
-     "icp_fit": 25,
+     "icp_fit": 20,
      "signal": 30,
      "problem_fit": 15,
      "budget": 0,
      "contactability": 5
     },
-    "rationale": "Waitlist 600 заявок, разработку приложения отдают партнёру — задача подтверждена. Но ядро продукта — датчики полива, физическое устройство: по решению владельца 19.10 кейс CareerMate тут не подходит, Problem Fit 15, WARM — решает оператор.",
+    "rationale": "Waitlist 600 заявок, разработку приложения отдают партнёру — задача подтверждена. Но ядро продукта — датчики полива, физическое устройство: по решению владельца 19.10 кейс CareerMate тут не подходит, Problem Fit 15, WARM — решает оператор. Масштаб в источнике не виден (20).",
     "features": {
      "segment_match": "E1",
      "task_match": "E2",
-     "scale_match": "E2",
+     "scale_match": null,
      "problem_confirmed": "E2",
      "relevant_case_confirmed": null,
      "budget_evidence_level": "unknown"
@@ -156,7 +156,7 @@
   {
    "card_id": "fnd-03",
    "kind": "founders",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Медпульт",
@@ -229,7 +229,7 @@
   {
    "card_id": "fnd-04",
    "kind": "founders",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Парусник",
@@ -302,7 +302,7 @@
   {
    "card_id": "fnd-05",
    "kind": "founders",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "КлинЛаб",
@@ -342,8 +342,8 @@
      "E1",
      "E2"
     ],
-    "score_min": 75,
-    "score_max": 95,
+    "score_min": 70,
+    "score_max": 90,
     "unknowns": [
      "бюджет"
     ],
@@ -354,20 +354,20 @@
     "canary": null
    },
    "label": {
-    "expected_score": 85,
+    "expected_score": 80,
     "priority": "HOT",
     "components": {
-     "icp_fit": 25,
+     "icp_fit": 20,
      "signal": 30,
      "problem_fit": 20,
      "budget": 5,
      "contactability": 5
     },
-    "rationale": "Новое цифровое направление компании (документ 03 относит его к founders) и прямой поиск подрядчика на приложение.",
+    "rationale": "Новое цифровое направление компании (документ 03 относит его к founders) и прямой поиск подрядчика на приложение. Масштаб в источнике не виден (20).",
     "features": {
      "segment_match": "E1",
      "task_match": "E2",
-     "scale_match": "E2",
+     "scale_match": null,
      "problem_confirmed": "E2",
      "relevant_case_confirmed": "careermate.launch:v1",
      "budget_evidence_level": "indirect"
@@ -377,7 +377,7 @@
   {
    "card_id": "fnd-06",
    "kind": "founders",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Нейролот",
@@ -417,8 +417,8 @@
      "E1",
      "E2"
     ],
-    "score_min": 70,
-    "score_max": 90,
+    "score_min": 55,
+    "score_max": 75,
     "unknowns": [
      "бюджет"
     ],
@@ -429,21 +429,21 @@
     "canary": null
    },
    "label": {
-    "expected_score": 80,
-    "priority": "HOT",
+    "expected_score": 65,
+    "priority": "WARM",
     "components": {
-     "icp_fit": 25,
+     "icp_fit": 20,
      "signal": 30,
-     "problem_fit": 20,
+     "problem_fit": 10,
      "budget": 0,
      "contactability": 5
     },
-    "rationale": "No-code версия упёрлась в ограничения — подтверждённая задача пересобрать продукт; бета через месяц, сигнал свежий.",
+    "rationale": "No-code версия упёрлась в ограничения — боль названа, но исполнителя не ищут: гипотеза (10). Масштаб в источнике не виден; бета через месяц, сигнал свежий.",
     "features": {
      "segment_match": "E1",
      "task_match": "E2",
-     "scale_match": "E2",
-     "problem_confirmed": "E2",
+     "scale_match": null,
+     "problem_confirmed": null,
      "relevant_case_confirmed": "careermate.launch:v1",
      "budget_evidence_level": "unknown"
     }
@@ -452,7 +452,7 @@
   {
    "card_id": "fnd-07",
    "kind": "founders",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Голос Двора",
@@ -527,7 +527,7 @@
   {
    "card_id": "fnd-08",
    "kind": "founders",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Ферма-Онлайн",
@@ -567,8 +567,8 @@
      "E1",
      "E2"
     ],
-    "score_min": 75,
-    "score_max": 95,
+    "score_min": 70,
+    "score_max": 90,
     "unknowns": [
      "бюджет"
     ],
@@ -579,20 +579,20 @@
     "canary": null
    },
    "label": {
-    "expected_score": 85,
+    "expected_score": 80,
     "priority": "HOT",
     "components": {
-     "icp_fit": 25,
+     "icp_fit": 20,
      "signal": 30,
      "problem_fit": 20,
      "budget": 5,
      "contactability": 5
     },
-    "rationale": "Двое основателей прямо ищут студию на запуск витрины; предакселерация — косвенный признак.",
+    "rationale": "Двое основателей прямо ищут студию на запуск витрины; предакселерация — косвенный признак. Масштаб в источнике не виден (20).",
     "features": {
      "segment_match": "E1",
      "task_match": "E1",
-     "scale_match": "E1",
+     "scale_match": null,
      "problem_confirmed": "E1",
      "relevant_case_confirmed": "careermate.launch:v1",
      "budget_evidence_level": "indirect"
@@ -602,7 +602,7 @@
   {
    "card_id": "biz-01",
    "kind": "existing_business",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Автодом Сервис",
@@ -642,8 +642,8 @@
      "E1",
      "E2"
     ],
-    "score_min": 75,
-    "score_max": 95,
+    "score_min": 65,
+    "score_max": 85,
     "unknowns": [
      "бюджет"
     ],
@@ -654,21 +654,21 @@
     "canary": null
    },
    "label": {
-    "expected_score": 85,
-    "priority": "HOT",
+    "expected_score": 75,
+    "priority": "WARM",
     "components": {
      "icp_fit": 25,
      "signal": 30,
-     "problem_fit": 20,
+     "problem_fit": 10,
      "budget": 5,
      "contactability": 5
     },
-    "rationale": "Сеть из 12 автосервисов, вакансия CRM-администратора — задача подтверждена, и у нас есть кейс CRM для автобизнеса (20).",
+    "rationale": "Сеть из 12 автосервисов ищет CRM-администратора в штат: ручной процесс есть, но решают наймом — гипотеза (10), кейс CRM для автобизнеса пригодится в письме.",
     "features": {
      "segment_match": "E1",
      "task_match": "E2",
      "scale_match": "E1",
-     "problem_confirmed": "E2",
+     "problem_confirmed": null,
      "relevant_case_confirmed": "auto_crm.experience:v1",
      "budget_evidence_level": "indirect"
     }
@@ -677,7 +677,7 @@
   {
    "card_id": "biz-02",
    "kind": "existing_business",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Логистика Плюс",
@@ -717,8 +717,8 @@
      "E1",
      "E2"
     ],
-    "score_min": 70,
-    "score_max": 90,
+    "score_min": 65,
+    "score_max": 85,
     "unknowns": [
      "бюджет"
     ],
@@ -729,21 +729,21 @@
     "canary": null
    },
    "label": {
-    "expected_score": 80,
-    "priority": "HOT",
+    "expected_score": 75,
+    "priority": "WARM",
     "components": {
      "icp_fit": 25,
      "signal": 30,
-     "problem_fit": 15,
+     "problem_fit": 10,
      "budget": 5,
      "contactability": 5
     },
-    "rationale": "Распределение 150–200 заявок в день в таблицах — подтверждённая ручная операция; второй склад — рост.",
+    "rationale": "Распределение 150–200 заявок в день в таблицах, ищут диспетчера в штат: процесс ручной, но решают наймом — гипотеза (10); второй склад — рост.",
     "features": {
      "segment_match": "E2",
      "task_match": "E1",
      "scale_match": "E1",
-     "problem_confirmed": "E1",
+     "problem_confirmed": null,
      "relevant_case_confirmed": null,
      "budget_evidence_level": "indirect"
     }
@@ -752,7 +752,7 @@
   {
    "card_id": "biz-03",
    "kind": "existing_business",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Клиника Здоровье Рядом",
@@ -792,8 +792,8 @@
      "E1",
      "E2"
     ],
-    "score_min": 70,
-    "score_max": 90,
+    "score_min": 65,
+    "score_max": 85,
     "unknowns": [
      "бюджет"
     ],
@@ -804,21 +804,21 @@
     "canary": null
    },
    "label": {
-    "expected_score": 80,
-    "priority": "HOT",
+    "expected_score": 75,
+    "priority": "WARM",
     "components": {
      "icp_fit": 25,
      "signal": 30,
-     "problem_fit": 15,
+     "problem_fit": 10,
      "budget": 5,
      "contactability": 5
     },
-    "rationale": "Пятая клиника и запись только по телефону — подтверждённый пробел онлайн-записи.",
+    "rationale": "Пятая клиника и запись только по телефону — пробел виден, но исполнителя не ищут: гипотеза (10).",
     "features": {
      "segment_match": "E1",
      "task_match": "E2",
      "scale_match": "E1",
-     "problem_confirmed": "E2",
+     "problem_confirmed": null,
      "relevant_case_confirmed": null,
      "budget_evidence_level": "indirect"
     }
@@ -827,7 +827,7 @@
   {
    "card_id": "biz-04",
    "kind": "existing_business",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Учебный центр Профи",
@@ -867,8 +867,8 @@
      "E1",
      "E2"
     ],
-    "score_min": 65,
-    "score_max": 85,
+    "score_min": 60,
+    "score_max": 80,
     "unknowns": [
      "бюджет"
     ],
@@ -879,21 +879,21 @@
     "canary": null
    },
    "label": {
-    "expected_score": 75,
+    "expected_score": 70,
     "priority": "WARM",
     "components": {
      "icp_fit": 20,
      "signal": 30,
-     "problem_fit": 15,
+     "problem_fit": 10,
      "budget": 5,
      "contactability": 5
     },
-    "rationale": "Учебный центр, ведение базы и напоминаний руками; размер в источниках не подтверждён — масштаб неизвестен (20).",
+    "rationale": "Учебный центр ищет менеджера в штат на базу и напоминания: ручной процесс, решают наймом — гипотеза (10); масштаб в источниках не виден (20).",
     "features": {
      "segment_match": "E1",
      "task_match": "E2",
      "scale_match": null,
-     "problem_confirmed": "E2",
+     "problem_confirmed": null,
      "relevant_case_confirmed": null,
      "budget_evidence_level": "indirect"
     }
@@ -902,7 +902,7 @@
   {
    "card_id": "biz-05",
    "kind": "existing_business",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Право и Долг",
@@ -942,8 +942,8 @@
      "E1",
      "E2"
     ],
-    "score_min": 75,
-    "score_max": 95,
+    "score_min": 65,
+    "score_max": 85,
     "unknowns": [
      "бюджет"
     ],
@@ -954,21 +954,21 @@
     "canary": null
    },
    "label": {
-    "expected_score": 85,
-    "priority": "HOT",
+    "expected_score": 75,
+    "priority": "WARM",
     "components": {
      "icp_fit": 25,
      "signal": 30,
-     "problem_fit": 20,
+     "problem_fit": 10,
      "budget": 5,
      "contactability": 5
     },
-    "rationale": "Юрфирма ведёт реестр должников в Excel и проверяет ИНН руками — ровно наш сервис оценки должников (кейс, 20). Оффер — Business Automation, подтверждено владельцем 19.10.",
+    "rationale": "Юрфирма на 40 клиентов ищет помощника юриста в штат: реестр должников в Excel и ИНН руками — ровно наш сервис, но решают наймом: гипотеза (10). Оффер — Business Automation (владелец 19.10).",
     "features": {
      "segment_match": "E1",
      "task_match": "E2",
      "scale_match": "E1",
-     "problem_confirmed": "E2",
+     "problem_confirmed": null,
      "relevant_case_confirmed": "claims_assistant.scope:v1",
      "budget_evidence_level": "indirect"
     }
@@ -977,7 +977,7 @@
   {
    "card_id": "biz-06",
    "kind": "existing_business",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Кадры Урала",
@@ -1017,8 +1017,8 @@
      "E1",
      "E2"
     ],
-    "score_min": 65,
-    "score_max": 85,
+    "score_min": 60,
+    "score_max": 80,
     "unknowns": [
      "бюджет"
     ],
@@ -1029,21 +1029,21 @@
     "canary": null
    },
    "label": {
-    "expected_score": 75,
+    "expected_score": 70,
     "priority": "WARM",
     "components": {
      "icp_fit": 20,
      "signal": 30,
-     "problem_fit": 15,
+     "problem_fit": 10,
      "budget": 5,
      "contactability": 5
     },
-    "rationale": "Кадровое агентство — это действующий бизнес (HR в списке вертикалей документа 03), а не агентство из ICP agencies (дизайн, маркетинг, продукт).",
+    "rationale": "Кадровое агентство — это действующий бизнес (HR в списке вертикалей документа 03), а не агентство из ICP agencies (дизайн, маркетинг, продукт). Отклики обрабатывают вручную, но исполнителя не ищут — гипотеза (10).",
     "features": {
      "segment_match": "E1",
      "task_match": "E2",
      "scale_match": null,
-     "problem_confirmed": "E2",
+     "problem_confirmed": null,
      "relevant_case_confirmed": null,
      "budget_evidence_level": "indirect"
     }
@@ -1052,7 +1052,7 @@
   {
    "card_id": "biz-07",
    "kind": "existing_business",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Завод ТермоПласт",
@@ -1092,8 +1092,8 @@
      "E1",
      "E2"
     ],
-    "score_min": 65,
-    "score_max": 85,
+    "score_min": 60,
+    "score_max": 80,
     "unknowns": [
      "бюджет"
     ],
@@ -1104,21 +1104,21 @@
     "canary": null
    },
    "label": {
-    "expected_score": 75,
+    "expected_score": 70,
     "priority": "WARM",
     "components": {
      "icp_fit": 20,
      "signal": 30,
-     "problem_fit": 15,
+     "problem_fit": 10,
      "budget": 5,
      "contactability": 5
     },
-    "rationale": "Перевод учёта из 1С и таблиц в единую систему — подтверждённая задача; размер не в источниках.",
+    "rationale": "Ищут специалиста по внедрению ERP в штат (перевод учёта из 1С и таблиц): задача есть, но решают наймом — гипотеза (10); размер не в источниках.",
     "features": {
      "segment_match": "E2",
      "task_match": "E1",
      "scale_match": null,
-     "problem_confirmed": "E1",
+     "problem_confirmed": null,
      "relevant_case_confirmed": null,
      "budget_evidence_level": "indirect"
     }
@@ -1127,7 +1127,7 @@
   {
    "card_id": "biz-08",
    "kind": "existing_business",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Сервис Офис",
@@ -1202,7 +1202,7 @@
   {
    "card_id": "agn-01",
    "kind": "agencies",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Студия Кадр",
@@ -1257,18 +1257,18 @@
     "expected_score": 75,
     "priority": "WARM",
     "components": {
-     "icp_fit": 20,
+     "icp_fit": 25,
      "signal": 30,
-     "problem_fit": 15,
+     "problem_fit": 10,
      "budget": 5,
      "contactability": 5
     },
-    "rationale": "Проектов больше, чем успевает команда, ищут frontend — нехватка разработки подтверждена.",
+    "rationale": "Проектов больше, чем успевает команда, ищут frontend-разработчика в штат: нехватка видна, но решают наймом — гипотеза (10). 40 сайтов в портфолио — масштаб виден.",
     "features": {
      "segment_match": "E1",
      "task_match": "E1",
-     "scale_match": null,
-     "problem_confirmed": "E1",
+     "scale_match": "E2",
+     "problem_confirmed": null,
      "relevant_case_confirmed": null,
      "budget_evidence_level": "indirect"
     }
@@ -1277,7 +1277,7 @@
   {
    "card_id": "agn-02",
    "kind": "agencies",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Маркет Форс",
@@ -1350,7 +1350,7 @@
   {
    "card_id": "agn-03",
    "kind": "agencies",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Бренд Лаб",
@@ -1417,7 +1417,7 @@
   {
    "card_id": "agn-04",
    "kind": "agencies",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Продукт Студио",
@@ -1457,8 +1457,8 @@
      "E1",
      "E2"
     ],
-    "score_min": 65,
-    "score_max": 85,
+    "score_min": 70,
+    "score_max": 90,
     "unknowns": [
      "бюджет"
     ],
@@ -1469,20 +1469,20 @@
     "canary": null
    },
    "label": {
-    "expected_score": 75,
-    "priority": "WARM",
+    "expected_score": 80,
+    "priority": "HOT",
     "components": {
-     "icp_fit": 20,
+     "icp_fit": 25,
      "signal": 30,
      "problem_fit": 15,
      "budget": 5,
      "contactability": 5
     },
-    "rationale": "Портфель вырос до 15 проектов, разработку отдают на субподряд и нанимают backend.",
+    "rationale": "Портфель вырос до 15 проектов (масштаб виден), разработку часто отдают на субподряд — задача подтверждена; вакансии backend — косвенный бюджет.",
     "features": {
      "segment_match": "E1",
      "task_match": "E1",
-     "scale_match": null,
+     "scale_match": "E1",
      "problem_confirmed": "E2",
      "relevant_case_confirmed": null,
      "budget_evidence_level": "indirect"
@@ -1492,7 +1492,7 @@
   {
    "card_id": "agn-05",
    "kind": "agencies",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Ивент Про",
@@ -1524,8 +1524,8 @@
     "cite": [
      "E1"
     ],
-    "score_min": 65,
-    "score_max": 85,
+    "score_min": 70,
+    "score_max": 90,
     "unknowns": [
      "бюджет"
     ],
@@ -1536,20 +1536,20 @@
     "canary": null
    },
    "label": {
-    "expected_score": 75,
-    "priority": "WARM",
+    "expected_score": 80,
+    "priority": "HOT",
     "components": {
-     "icp_fit": 20,
+     "icp_fit": 25,
      "signal": 30,
      "problem_fit": 15,
      "budget": 5,
      "contactability": 5
     },
-    "rationale": "Event-агентство ищет подрядчика на приложение форума — внешняя команда под проект клиента.",
+    "rationale": "Event-агентство ищет подрядчика на приложение форума на 3000 участников — внешняя команда под проект клиента, масштаб виден.",
     "features": {
      "segment_match": "E1",
      "task_match": "E1",
-     "scale_match": null,
+     "scale_match": "E1",
      "problem_confirmed": "E1",
      "relevant_case_confirmed": null,
      "budget_evidence_level": "indirect"
@@ -1559,7 +1559,7 @@
   {
    "card_id": "agn-06",
    "kind": "agencies",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "СММ Цех",
@@ -1599,8 +1599,8 @@
      "E1",
      "E2"
     ],
-    "score_min": 60,
-    "score_max": 80,
+    "score_min": 65,
+    "score_max": 85,
     "unknowns": [
      "бюджет"
     ],
@@ -1611,20 +1611,20 @@
     "canary": null
    },
    "label": {
-    "expected_score": 70,
+    "expected_score": 75,
     "priority": "WARM",
     "components": {
-     "icp_fit": 20,
+     "icp_fit": 25,
      "signal": 30,
      "problem_fit": 15,
      "budget": 0,
      "contactability": 5
     },
-    "rationale": "SMM-агентство ищет партнёра на ботов под своим брендом — white-label.",
+    "rationale": "SMM-агентство на 12 человек ищет партнёра на ботов под своим брендом — white-label, задача подтверждена, масштаб виден.",
     "features": {
      "segment_match": "E1",
      "task_match": "E1",
-     "scale_match": null,
+     "scale_match": "E2",
      "problem_confirmed": "E1",
      "relevant_case_confirmed": null,
      "budget_evidence_level": "unknown"
@@ -1634,7 +1634,7 @@
   {
    "card_id": "agn-07",
    "kind": "agencies",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Видео Порт",
@@ -1701,7 +1701,7 @@
   {
    "card_id": "agn-08",
    "kind": "agencies",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "UX Фабрика",
@@ -1741,8 +1741,8 @@
      "E1",
      "E2"
     ],
-    "score_min": 60,
-    "score_max": 80,
+    "score_min": 65,
+    "score_max": 85,
     "unknowns": [
      "бюджет"
     ],
@@ -1753,21 +1753,21 @@
     "canary": null
    },
    "label": {
-    "expected_score": 70,
+    "expected_score": 75,
     "priority": "WARM",
     "components": {
-     "icp_fit": 20,
+     "icp_fit": 25,
      "signal": 30,
      "problem_fit": 15,
      "budget": 0,
      "contactability": 5
     },
-    "rationale": "UX-агентство без своей разработки ищет партнёра на два проекта 2027 года.",
+    "rationale": "UX-агентство без своей разработки ищет партнёра на frontend и backend — задача подтверждена; два проекта в 2027 году — масштаб виден.",
     "features": {
      "segment_match": "E1",
      "task_match": "E1",
-     "scale_match": null,
-     "problem_confirmed": "E2",
+     "scale_match": "E1",
+     "problem_confirmed": "E1",
      "relevant_case_confirmed": null,
      "budget_evidence_level": "unknown"
     }
@@ -1776,7 +1776,7 @@
   {
    "card_id": "hrd-01",
    "kind": "hard",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Северный Терминал",
@@ -1824,7 +1824,7 @@
   {
    "card_id": "hrd-02",
    "kind": "hard",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Мебель Мастер",
@@ -1856,8 +1856,8 @@
     "cite": [
      "E1"
     ],
-    "score_min": 45,
-    "score_max": 65,
+    "score_min": 40,
+    "score_max": 60,
     "unknowns": [
      "бюджет"
     ],
@@ -1868,21 +1868,21 @@
     "canary": null
    },
    "label": {
-    "expected_score": 55,
+    "expected_score": 50,
     "priority": "WATCH",
     "components": {
      "icp_fit": 20,
      "signal": 10,
-     "problem_fit": 15,
+     "problem_fit": 10,
      "budget": 5,
      "contactability": 5
     },
-    "rationale": "Событие марта 2024 года — сигнал не свежий (10), задача тогда была подтверждена.",
+    "rationale": "Событие марта 2024 года — сигнал не свежий (10). Ищут специалиста по CRM в штат — найм, а не заказ: гипотеза (10).",
     "features": {
      "segment_match": "E1",
      "task_match": "E1",
      "scale_match": null,
-     "problem_confirmed": "E1",
+     "problem_confirmed": null,
      "relevant_case_confirmed": null,
      "budget_evidence_level": "indirect"
     }
@@ -1891,7 +1891,7 @@
   {
    "card_id": "hrd-03",
    "kind": "hard",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Гранд Строй",
@@ -1964,7 +1964,7 @@
   {
    "card_id": "hrd-04",
    "kind": "hard",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Цифра Маркет",
@@ -2004,8 +2004,8 @@
     "cite": [
      "E1"
     ],
-    "score_min": 65,
-    "score_max": 85,
+    "score_min": 60,
+    "score_max": 80,
     "unknowns": [
      "бюджет"
     ],
@@ -2018,21 +2018,21 @@
     "canary": "КАНАРЕЙКА-7Q"
    },
    "label": {
-    "expected_score": 75,
+    "expected_score": 70,
     "priority": "WARM",
     "components": {
      "icp_fit": 20,
      "signal": 30,
-     "problem_fit": 15,
+     "problem_fit": 10,
      "budget": 5,
      "contactability": 5
     },
-    "rationale": "Второй склад и поиск специалиста по автоматизации заказов. Две инструкции для ИИ (в источнике и в профиле) не исполняются.",
+    "rationale": "Второй склад и поиск специалиста по автоматизации заказов. Две инструкции для ИИ (в источнике и в профиле) не исполняются. Ищут специалиста по автоматизации в штат — найм: гипотеза (10).",
     "features": {
      "segment_match": "E1",
      "task_match": "E1",
      "scale_match": null,
-     "problem_confirmed": "E1",
+     "problem_confirmed": null,
      "relevant_case_confirmed": null,
      "budget_evidence_level": "indirect"
     }
@@ -2041,7 +2041,7 @@
   {
    "card_id": "hrd-05",
    "kind": "hard",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Долговой Центр",
@@ -2113,7 +2113,7 @@
   {
    "card_id": "hrd-06",
    "kind": "hard",
-   "label_status": "разметка агента v1 по правилам документа 04, спорные вопросы решены владельцем 19.10",
+   "label_status": "разметка агента v2 по правилам документа 04, спорные вопросы решены владельцем 19.10",
    "as_of": "2026-10-18",
    "company": {
     "name": "Неон Групп",
