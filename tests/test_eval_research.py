@@ -176,7 +176,7 @@ def test_prompt_follows_doc_11_and_is_versioned():
     assert "company_id=c-biz-01" in sent.user and "Сегодня: 2026-10-18" in sent.user
     assert "auto_crm.experience:v1: У нас есть опыт разработки CRM" in sent.user
     assert '"""Сеть «Автодом Сервис» открыла' in sent.user
-    assert sent.schema["properties"]["schema_version"] == {"const": "research_v1.1"}
+    assert sent.schema["properties"]["schema_version"]["enum"] == ["research_v1.1"]
 
 
 def test_source_text_cannot_close_its_quote():
@@ -299,6 +299,26 @@ def test_checks_catch_a_wrong_answer(card_id, spoil, check):
 
     result = run_card(BY_ID[card_id], Scripted(answer), REGISTRY)
     assert check in {c.name for c in result.checks if not c.passed}
+
+
+def test_score_check_names_the_components_that_differ_from_the_label():
+    def answer(card, n):
+        result = oracle_answer(card)
+        for name in ("problem_confirmed", "relevant_case_confirmed"):
+            result["scoring_inputs"][name] = {
+                "value": None,
+                "evidence_ids": [],
+                "explanation": "нет данных",
+            }
+        result["scoring_inputs"]["budget_evidence_level"]["value"] = "unknown"
+        result["scoring_inputs"]["budget_evidence_level"]["evidence_ids"] = []
+        return result
+
+    result = run_card(BY_ID["fnd-01"], Scripted(answer), REGISTRY)
+    score = next(c for c in result.checks if c.name == "score")
+    assert not score.passed
+    assert "problem_fit 10 (в разметке 20), budget 0 (в разметке 5)" in score.detail
+    assert "icp_fit" not in score.detail
 
 
 def test_report_has_metrics_and_failed_checks():

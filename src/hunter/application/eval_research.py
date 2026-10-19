@@ -80,6 +80,7 @@ class EvalCard:
     evidence: tuple[EvalEvidence, ...]
     contacts: tuple[EvalContact, ...]
     expected: Expected
+    label_components: Mapping[str, int] = field(default_factory=dict)  # label.components
 
     @property
     def company_id(self) -> str:
@@ -176,6 +177,7 @@ def load_cards(data: Mapping[str, object]) -> tuple[EvalCard, ...]:
                 evidence=evidence,
                 contacts=contacts,
                 expected=expected,
+                label_components=dict(raw.get("label", {}).get("components", {})),
             )
         )
     ids = [card.card_id for card in cards]
@@ -221,6 +223,16 @@ def _texts(research: Research) -> list[str]:
     return [t for t in texts if t]
 
 
+def _component_diff(label: Mapping[str, int], score: Score) -> str:
+    """Which components differ from the label: a run shows where model and label part ways."""
+    diff = [
+        f"{name} {score.components[name]} (в разметке {value})"
+        for name, value in label.items()
+        if name in score.components and score.components[name] != value
+    ]
+    return f" ({', '.join(diff)})" if diff else ""
+
+
 def _checks(card: EvalCard, research: Research, score: Score, raw: str) -> list[Check]:
     exp = card.expected
     icp = research.icp.value if research.icp else "unknown"
@@ -236,7 +248,8 @@ def _checks(card: EvalCard, research: Research, score: Score, raw: str) -> list[
         Check(
             "score",
             exp.score_min <= score.total <= exp.score_max,
-            f"{score.total}, ожидалось {exp.score_min}–{exp.score_max}",
+            f"{score.total}, ожидалось {exp.score_min}–{exp.score_max}"
+            + _component_diff(card.label_components, score),
         ),
         Check(
             "неизвестные",
