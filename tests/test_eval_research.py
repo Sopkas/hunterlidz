@@ -178,7 +178,7 @@ def test_prompt_follows_doc_11_and_is_versioned():
     assert "auto_crm.experience:v1: У нас есть опыт разработки CRM" in sent.user
     assert '"""Сеть «Автодом Сервис» открыла' in sent.user
     assert sent.schema["properties"]["schema_version"]["enum"] == ["research_v1.1"]
-    assert sent.max_output_tokens == 3000
+    assert sent.max_output_tokens == 8000  # owner, 19.10
 
 
 def test_prompt_v3_spells_out_the_owner_rules_of_19_10():
@@ -361,7 +361,7 @@ def test_cli_writes_the_report(tmp_path, monkeypatch, capsys):
         cards=str(ROOT / "data/eval/research_cards.json"),
         out=str(out),
         only=None,
-        max_output_tokens=3000,
+        max_output_tokens=8000,
     )
     assert eval_cmd.handle(app, args) == 0
     assert "Все проверки пройдены: 30 из 30" in out.read_text("utf-8")

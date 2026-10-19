@@ -25,7 +25,9 @@ from hunter.domain.cases import CaseClaim
 
 RESEARCH_PROMPT_VERSION = "research_prompt_v3"
 ICP_VERSION = "icp_v1"  # doc 03, «Три исходных сегмента»
-RESEARCH_MAX_OUTPUT_TOKENS = 3000  # doc 09 budget per run, doc 12 RESEARCH_MAX_OUTPUT_TOKENS
+# Doc 12 RESEARCH_MAX_OUTPUT_TOKENS; 8000 by the owner on 19.10: reasoning models spend 2-4
+# thousand tokens before the answer, and the price is per generated token, not per limit.
+RESEARCH_MAX_OUTPUT_TOKENS = 8000
 
 SYSTEM_INSTRUCTION = """\
 Ты помогаешь небольшой продуктовой команде исследовать B2B-компании

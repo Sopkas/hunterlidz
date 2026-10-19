@@ -89,10 +89,10 @@ export HUNTER_LLM_MODEL=qwen/qwen3-8b:free
 export HUNTER_LLM_API_KEY=…
 python -m hunter eval-research                    # отчёт в docs/eval/research-<дата>.md
 python -m hunter eval-research --only hrd-04      # одна карточка
-python -m hunter eval-research --max-output-tokens 8000   # для думающих моделей
+python -m hunter eval-research --max-output-tokens 12000  # другой лимит ответа
 ```
 
-Лимит ответа по умолчанию — 3000 токенов (документ 12, `RESEARCH_MAX_OUTPUT_TOKENS`). Думающие модели (Claude Haiku 5.5, Qwen 3.8, Nemotron) тратят 2–4 тысячи на рассуждение и обрезаются; отчёт пишет лимит в шапке.
+Лимит ответа по умолчанию — 8000 токенов (документ 12, `RESEARCH_MAX_OUTPUT_TOKENS`; владелец поднял с 3000 19.10). Думающие модели (DeepSeek, Claude Haiku 5.5, Qwen 3.8, Nemotron) тратят 2–4 тысячи на рассуждение и с лимитом 3000 обрезались. Платим за сгенерированные токены, а не за лимит. Отчёт пишет лимит в шапке.
 
 Суточный лимит бесплатных запросов мал: полный прогон — до 60 запросов (30 карточек и не больше одного исправления на каждую). Отчёт коммитится в `docs/eval/` вместе с моделью и версией промпта.
 

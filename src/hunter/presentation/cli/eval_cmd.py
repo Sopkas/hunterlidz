@@ -29,7 +29,7 @@ def register(subparsers: argparse._SubParsersAction) -> None:
         "--max-output-tokens",
         type=int,
         default=RESEARCH_MAX_OUTPUT_TOKENS,
-        help="лимит ответа модели; думающим моделям мало 3000",
+        help="лимит ответа модели (по умолчанию 8000, документ 12)",
     )
     parser.set_defaults(handler=handle)
 
