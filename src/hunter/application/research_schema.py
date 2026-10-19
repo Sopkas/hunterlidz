@@ -47,6 +47,14 @@ def _object(properties: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _enum(values: list[Any]) -> dict[str, Any]:
+    """Strict providers (OpenAI, Azure) want a type next to every enum; null rides as a type."""
+    types = sorted(
+        {"null" if v is None else "boolean" if isinstance(v, bool) else "string" for v in values}
+    )
+    return {"type": types[0] if len(types) == 1 else types, "enum": values}
+
+
 def _feature(value: dict[str, Any]) -> dict[str, Any]:
     return _object(
         {"value": value, "evidence_ids": _refs(), "explanation": _text(LIMITS["explanation"])}
@@ -56,14 +64,14 @@ def _feature(value: dict[str, Any]) -> dict[str, Any]:
 def research_json_schema() -> dict[str, Any]:
     boolean = {"type": ["boolean", "null"]}
     features = {name: _feature(boolean) for name in BOOLEAN_FEATURES}
-    features["budget_evidence_level"] = _feature({"enum": [level.value for level in BudgetLevel]})
-    features["contact_level"] = _feature({"enum": [level.value for level in ContactLevel]})
+    features["budget_evidence_level"] = _feature(_enum([level.value for level in BudgetLevel]))
+    features["contact_level"] = _feature(_enum([level.value for level in ContactLevel]))
     return _object(
         {
-            "schema_version": {"const": SCHEMA_VERSION},
+            "schema_version": _enum([SCHEMA_VERSION]),
             "company_id": {"type": "string"},
             "lead_id": {"type": "string"},
-            "icp": {"enum": [*(icp.value for icp in Icp), "unknown"]},
+            "icp": _enum([*(icp.value for icp in Icp), "unknown"]),
             "summary": _text(LIMITS["summary"]),
             "facts": {
                 "type": "array",
@@ -82,13 +90,13 @@ def research_json_schema() -> dict[str, Any]:
                             "type": ["string", "null"],
                             "pattern": r"^\d{4}-\d{2}-\d{2}$",
                         },
-                        "date_precision": {"enum": [p.value for p in DatePrecision]},
+                        "date_precision": _enum([p.value for p in DatePrecision]),
                     }
                 ),
             },
             "problem_hypothesis": _nullable(LIMITS["problem_hypothesis"]),
             "validation_question": _nullable(LIMITS["validation_question"]),
-            "recommended_product": {"enum": [*(p.value for p in Product), None]},
+            "recommended_product": _enum([*(p.value for p in Product), None]),
             "relevant_case_claim_ids": {
                 "type": "array",
                 "items": {"type": "string"},
