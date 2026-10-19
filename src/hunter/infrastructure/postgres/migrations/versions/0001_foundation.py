@@ -136,7 +136,10 @@ CREATE TABLE sources (
     error_code text,
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now(),
-    UNIQUE (source_type, canonical_url),
+    -- A record is a snapshot of one fetch (domain contract, deviation 16, review of #16): a
+    -- refetch with new content is a new record, so evidence keeps pointing at the text where
+    -- its excerpt was found (T-06). Failed attempts have no content_hash and never collide.
+    UNIQUE (source_type, canonical_url, content_hash),
     -- Doc 10: a URL does not prove the content was received.
     CHECK ((fetch_status IN ('imported', 'fetched')) = (error_code IS NULL))
 );

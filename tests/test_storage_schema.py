@@ -308,6 +308,19 @@ def test_contact_address_is_unique_per_channel(db):
     )
 
 
+def test_a_source_record_is_a_snapshot_of_one_fetch(db):
+    # Review of #14 and #16: a refetch with new content is a new record; the same content of the
+    # same page twice is a duplicate; failed attempts (no content_hash) never collide.
+    url = "https://alpha.ru/about"
+    source(db, canonical_url=url, content_hash="sha256:aaa")
+    source(db, canonical_url=url, content_hash="sha256:bbb")
+    with pytest.raises(IntegrityError), db.begin_nested():
+        source(db, canonical_url=url, content_hash="sha256:aaa")
+    for _ in range(2):
+        source(db, canonical_url=url, fetch_status="error", error_code="timeout")
+    source(db, canonical_url=url, source_type="manual", content_hash="sha256:aaa")
+
+
 def test_source_error_code_matches_fetch_status(db):
     # Doc 10: a URL does not prove the content was received.
     with pytest.raises(IntegrityError), db.begin_nested():
