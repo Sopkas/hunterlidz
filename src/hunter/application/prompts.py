@@ -23,7 +23,7 @@ from hunter.application.llm import LlmRequest
 from hunter.application.research_schema import research_json_schema
 from hunter.domain.cases import CaseClaim
 
-RESEARCH_PROMPT_VERSION = "research_prompt_v1"
+RESEARCH_PROMPT_VERSION = "research_prompt_v2"
 ICP_VERSION = "icp_v1"  # doc 03, «Три исходных сегмента»
 RESEARCH_MAX_OUTPUT_TOKENS = 3000  # doc 09 budget per run, doc 12 RESEARCH_MAX_OUTPUT_TOKENS
 
@@ -54,7 +54,16 @@ ICP_DEFINITIONS = """\
   Оффер: business_automation.
 - agencies — дизайн-, маркетинговые, брендинговые и продуктовые агентства.
   Сигналы: новый крупный проект, рост портфеля, поиск подрядчика, нехватка разработки.
-  Оффер: external_product_team."""
+  Оффер: external_product_team.
+
+Как выбрать оффер:
+- mvp_launch — проект с результатом и сроком: первая версия нового продукта. Его выбирай и для
+  компании или агентства, которое запускает собственный новый продукт или платформу.
+- business_automation — процесс действующего бизнеса, который идёт руками или в таблицах,
+  переносим во внутреннюю систему.
+- external_product_team — выделенная команда на месяцы под регулярную работу: агентству не
+  хватает разработки под проекты его клиентов, или продукт уже запущен и его развивают.
+Физические продукты (устройства, оборудование) — не наш профиль: такой кейс не подтверждай."""
 
 RESEARCH_TEMPLATE = """\
 Задача: исследовать company_id={company_id} для lead_id={lead_id}.
@@ -75,6 +84,16 @@ RESEARCH_TEMPLATE = """\
 Не рассчитывай итоговый score: это делает код по версии правил.
 Сигнал с неизвестной датой не объявляй свежим.
 Ссылайся на evidence только по их ID (E1, E2…), на кейсы — по их ID.
+
+Правила заполнения:
+- facts: каждое подтверждённое утверждение о компании из evidence — отдельным фактом
+  с его evidence_id, даже если оно же стало сигналом. Пустой facts при наличии evidence —
+  ошибка.
+- scoring_inputs: признак true ставь только со ссылкой evidence_ids на то, что его
+  подтверждает; без ссылки признак — null.
+- Если ICP unknown, recommended_product и offer — null.
+- Если источники противоречат друг другу, needs_review = true и опиши противоречие
+  в missing_data.
 Верни объект {schema_version}. Не добавляй Markdown вокруг JSON."""
 
 
