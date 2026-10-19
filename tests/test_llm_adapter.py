@@ -446,6 +446,27 @@ def test_schema_is_strict_everywhere():
         assert obj["required"] == list(obj["properties"])
 
 
+def _fields(node):
+    if isinstance(node, dict):
+        for name, value in node.get("properties", {}).items():
+            yield name, value
+        if isinstance(node.get("items"), dict):
+            yield "items", node["items"]
+        for value in node.values():
+            yield from _fields(value)
+
+
+def test_every_field_has_a_type():
+    # OpenAI and Azure reject a strict schema with a bare enum or const (polza.ai, 19.10):
+    # "schema must have a 'type' key".
+    for name, field in _fields(research_json_schema()):
+        assert "type" in field, name
+        assert "const" not in field, name
+        for value in field.get("enum", []):
+            kind = {str: "string", bool: "boolean", type(None): "null"}[type(value)]
+            assert kind in (field["type"] if isinstance(field["type"], list) else [field["type"]])
+
+
 def test_schema_lists_every_feature():
     features = research_json_schema()["properties"]["scoring_inputs"]["properties"]
     assert set(features) == set(FEATURES)
