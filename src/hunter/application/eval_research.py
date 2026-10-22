@@ -21,6 +21,7 @@ from decimal import Decimal
 from hunter.application.llm import LlmClient, LlmStatus, Usage
 from hunter.application.llm_calls import call_parsed
 from hunter.application.prompts import (
+    RESEARCH_MAX_OUTPUT_TOKENS,
     RESEARCH_PROMPT_VERSION,
     EvidenceItem,
     build_research_request,
@@ -80,6 +81,7 @@ class EvalCard:
     evidence: tuple[EvalEvidence, ...]
     contacts: tuple[EvalContact, ...]
     expected: Expected
+    label_components: Mapping[str, int] = field(default_factory=dict)  # label.components
 
     @property
     def company_id(self) -> str:
@@ -176,6 +178,7 @@ def load_cards(data: Mapping[str, object]) -> tuple[EvalCard, ...]:
                 evidence=evidence,
                 contacts=contacts,
                 expected=expected,
+                label_components=dict(raw.get("label", {}).get("components", {})),
             )
         )
     ids = [card.card_id for card in cards]
@@ -221,6 +224,16 @@ def _texts(research: Research) -> list[str]:
     return [t for t in texts if t]
 
 
+def _component_diff(label: Mapping[str, int], score: Score) -> str:
+    """Which components differ from the label: a run shows where model and label part ways."""
+    diff = [
+        f"{name} {score.components[name]} (в разметке {value})"
+        for name, value in label.items()
+        if name in score.components and score.components[name] != value
+    ]
+    return f" ({', '.join(diff)})" if diff else ""
+
+
 def _checks(card: EvalCard, research: Research, score: Score, raw: str) -> list[Check]:
     exp = card.expected
     icp = research.icp.value if research.icp else "unknown"
@@ -236,7 +249,8 @@ def _checks(card: EvalCard, research: Research, score: Score, raw: str) -> list[
         Check(
             "score",
             exp.score_min <= score.total <= exp.score_max,
-            f"{score.total}, ожидалось {exp.score_min}–{exp.score_max}",
+            f"{score.total}, ожидалось {exp.score_min}–{exp.score_max}"
+            + _component_diff(card.label_components, score),
         ),
         Check(
             "неизвестные",
@@ -270,7 +284,12 @@ def _checks(card: EvalCard, research: Research, score: Score, raw: str) -> list[
     return checks
 
 
-def run_card(card: EvalCard, client: LlmClient, registry: CaseRegistry) -> CardResult:
+def run_card(
+    card: EvalCard,
+    client: LlmClient,
+    registry: CaseRegistry,
+    max_output_tokens: int = RESEARCH_MAX_OUTPUT_TOKENS,
+) -> CardResult:
     usable = [claim for claim in registry.claims if claim.usable_in_messages]
     aliases = {e.alias: card.evidence_id(e.alias) for e in card.evidence}
     request = build_research_request(
@@ -289,6 +308,7 @@ def run_card(card: EvalCard, client: LlmClient, registry: CaseRegistry) -> CardR
             for e in card.evidence
         ],
         claims=usable,
+        max_output_tokens=max_output_tokens,
     )
     raw: list[str] = []
 
@@ -370,6 +390,7 @@ class EvalReport:
     run_on: date
     results: tuple[CardResult, ...]
     label_status: tuple[str, ...] = field(default=())
+    max_output_tokens: int = RESEARCH_MAX_OUTPUT_TOKENS
 
     @property
     def schema_rate(self) -> float:
@@ -389,7 +410,7 @@ def report_markdown(report: EvalReport) -> str:
         f"# Eval research — {report.run_on.isoformat()}",
         "",
         f"- Модель: `{report.model_id}`; промпт: `{report.prompt_version}`; "
-        f"карточек: {len(results)}.",
+        f"лимит ответа: {report.max_output_tokens} токенов; карточек: {len(results)}.",
         f"- Разметка: {', '.join(sorted(set(report.label_status))) or '—'}.",
         f"- Схема с не более чем одним исправлением: {report.schema_rate:.0%} "
         "(порог пилота 90%, документ 13).",
@@ -425,11 +446,12 @@ def run_eval(
     registry: CaseRegistry,
     run_on: date,
     on_result: Callable[[int, int, CardResult], None] | None = None,
+    max_output_tokens: int = RESEARCH_MAX_OUTPUT_TOKENS,
 ) -> EvalReport:
     """`on_result(done, total, result)` is called after every card: a live run takes minutes."""
     results = []
     for card in cards:
-        results.append(run_card(card, client, registry))
+        results.append(run_card(card, client, registry, max_output_tokens))
         if on_result:
             on_result(len(results), len(cards), results[-1])
     return EvalReport(
@@ -438,4 +460,5 @@ def run_eval(
         run_on=run_on,
         results=tuple(results),
         label_status=tuple(card.label_status for card in cards),
+        max_output_tokens=max_output_tokens,
     )

@@ -23,9 +23,11 @@ from hunter.application.llm import LlmRequest
 from hunter.application.research_schema import research_json_schema
 from hunter.domain.cases import CaseClaim
 
-RESEARCH_PROMPT_VERSION = "research_prompt_v1"
+RESEARCH_PROMPT_VERSION = "research_prompt_v3"
 ICP_VERSION = "icp_v1"  # doc 03, «Три исходных сегмента»
-RESEARCH_MAX_OUTPUT_TOKENS = 3000  # doc 09 budget per run, doc 12 RESEARCH_MAX_OUTPUT_TOKENS
+# Doc 12 RESEARCH_MAX_OUTPUT_TOKENS; 8000 by the owner on 19.10: reasoning models spend 2-4
+# thousand tokens before the answer, and the price is per generated token, not per limit.
+RESEARCH_MAX_OUTPUT_TOKENS = 8000
 
 SYSTEM_INSTRUCTION = """\
 Ты помогаешь небольшой продуктовой команде исследовать B2B-компании
@@ -54,7 +56,16 @@ ICP_DEFINITIONS = """\
   Оффер: business_automation.
 - agencies — дизайн-, маркетинговые, брендинговые и продуктовые агентства.
   Сигналы: новый крупный проект, рост портфеля, поиск подрядчика, нехватка разработки.
-  Оффер: external_product_team."""
+  Оффер: external_product_team.
+
+Как выбрать оффер:
+- mvp_launch — проект с результатом и сроком: первая версия нового продукта. Его выбирай и для
+  компании или агентства, которое запускает собственный новый продукт или платформу.
+- business_automation — процесс действующего бизнеса, который идёт руками или в таблицах,
+  переносим во внутреннюю систему.
+- external_product_team — выделенная команда на месяцы под регулярную работу: агентству не
+  хватает разработки под проекты его клиентов, или продукт уже запущен и его развивают.
+Физические продукты (устройства, оборудование) — не наш профиль: такой кейс не подтверждай."""
 
 RESEARCH_TEMPLATE = """\
 Задача: исследовать company_id={company_id} для lead_id={lead_id}.
@@ -75,6 +86,24 @@ RESEARCH_TEMPLATE = """\
 Не рассчитывай итоговый score: это делает код по версии правил.
 Сигнал с неизвестной датой не объявляй свежим.
 Ссылайся на evidence только по их ID (E1, E2…), на кейсы — по их ID.
+
+Правила заполнения:
+- facts: каждое подтверждённое утверждение о компании из evidence — отдельным фактом
+  с его evidence_id, даже если оно же стало сигналом. Пустой facts при наличии evidence —
+  ошибка.
+- scoring_inputs: признак true ставь только со ссылкой evidence_ids на то, что его
+  подтверждает; без ссылки признак — null.
+- problem_confirmed: true, только если компания сама ищет внешнего исполнителя под то,
+  что мы делаем (подрядчика, студию, команду, партнёра, сервис, субподряд), или выиграла
+  тендер, под который нужна разработка. Вакансия в штат, описание ручного процесса или
+  названная боль — гипотеза: problem_confirmed = null.
+- scale_match: true, только если масштаб виден в evidence: число филиалов, клиентов,
+  проектов, заявок, сотрудников или срок задачи. Профиль импорта масштабом не считается.
+- budget_evidence_level: грант, раунд или выигранный тендер — directional_spend; найм,
+  акселератор, новые филиалы или поиск подрядчика — indirect; иначе unknown.
+- Если ICP unknown, recommended_product и offer — null.
+- Если источники противоречат друг другу, needs_review = true и опиши противоречие
+  в missing_data.
 Верни объект {schema_version}. Не добавляй Markdown вокруг JSON."""
 
 
@@ -118,8 +147,11 @@ def build_research_request(
     company_profile: dict,
     evidence: Sequence[EvidenceItem],
     claims: Sequence[CaseClaim],
+    max_output_tokens: int = RESEARCH_MAX_OUTPUT_TOKENS,
 ) -> LlmRequest:
-    """`claims` are the usable claims of the registry (approved, external, not withdrawn)."""
+    """`claims` are the usable claims of the registry (approved, external, not withdrawn).
+    `max_output_tokens`: reasoning models spend 2–4 thousand tokens before the answer and need
+    more than the default (eval runs of 19.10)."""
     user = RESEARCH_TEMPLATE.format(
         company_id=company_id,
         lead_id=lead_id,
@@ -137,7 +169,7 @@ def build_research_request(
         system=SYSTEM_INSTRUCTION,
         user=user,
         schema=research_json_schema(),
-        max_output_tokens=RESEARCH_MAX_OUTPUT_TOKENS,
+        max_output_tokens=max_output_tokens,
     )
 
 

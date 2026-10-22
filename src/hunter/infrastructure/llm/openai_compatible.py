@@ -149,18 +149,23 @@ class OpenAICompatibleClient:
         return f"{self.provider}:{self.model}"
 
     def complete_json(self, request: LlmRequest) -> LlmResult:
+        system = request.system
         if self.structured == "json_schema":
             response_format = {
                 "type": "json_schema",
                 "json_schema": {"name": "result", "strict": True, "schema": request.schema},
             }
         else:
+            # Without provider-side schema the model sees the fields only here: Claude on
+            # polza.ai dropped null fields until it did (19.10).
             response_format = {"type": "json_object"}
+            schema = json.dumps(request.schema, ensure_ascii=False)
+            system = f"{system}\n\nJSON-схема ответа (все поля обязательны):\n{schema}"
         body = json.dumps(
             {
                 "model": self.model,
                 "messages": [
-                    {"role": "system", "content": request.system},
+                    {"role": "system", "content": system},
                     {"role": "user", "content": request.user},
                 ],
                 "max_tokens": request.max_output_tokens,

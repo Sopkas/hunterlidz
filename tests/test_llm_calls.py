@@ -40,7 +40,7 @@ def test_one_correction_with_the_reason_and_a_new_call_id():
     result = call_parsed(client, REQUEST, strict)
     assert result.value == "parsed" and result.corrections == 1
     second = client.requests[1]
-    assert second.call_id == "task:2"
+    assert second.call_id == "task:1:fix"
     assert second.user.endswith(
         "Ответ не прошёл проверку формы: ok: ожидается true. Верни JSON по схеме."
     )
@@ -50,6 +50,23 @@ def test_one_correction_with_the_reason_and_a_new_call_id():
 def test_not_json_gets_the_correction_too():
     result = call_parsed(Scripted(LlmErrorCode.NOT_JSON, {"ok": True}), REQUEST, strict)
     assert result.value == "parsed" and result.corrections == 1
+
+
+def test_corrections_of_different_runs_keep_different_call_ids():
+    ids = set()
+    for run in ("research:9118d35b", "research:f1efb722"):
+        client = Scripted({"ok": False}, {"ok": True})
+        call_parsed(client, LlmRequest(run, "p1", "s", "u", {}, 100), strict)
+        ids.add(client.requests[1].call_id)
+    assert ids == {"research:9118d35b:fix", "research:f1efb722:fix"}
+
+
+def test_truncated_answer_is_not_repeated():
+    # The same limit would cut it again; both calls would be paid (review of #15).
+    client = Scripted(LlmErrorCode.TRUNCATED, {"ok": True})
+    result = call_parsed(client, REQUEST, strict)
+    assert result.value is None and result.corrections == 0 and len(client.requests) == 1
+    assert "truncated" in result.error
 
 
 def test_second_wrong_shape_gives_up():

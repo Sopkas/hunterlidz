@@ -97,6 +97,14 @@ def test_json_object_mode_for_models_without_schemas():
     transport = FakeTransport(answer('{"ok": true}'))
     client(transport, structured="json_object").complete_json(REQUEST)
     assert transport.calls[0][2]["response_format"] == {"type": "json_object"}
+    system = transport.calls[0][2]["messages"][0]["content"]
+    assert system.startswith("Правила") and '"type": "object"' in system
+
+
+def test_json_schema_mode_keeps_the_system_message():
+    transport = FakeTransport(answer('{"ok": "да"}'))
+    client(transport).complete_json(REQUEST)
+    assert transport.calls[0][2]["messages"][0]["content"] == "Правила"
 
 
 # --- Success ------------------------------------------------------------------------------
@@ -444,6 +452,35 @@ def test_schema_is_strict_everywhere():
     for obj in _objects(research_json_schema()):
         assert obj["additionalProperties"] is False
         assert obj["required"] == list(obj["properties"])
+
+
+def _fields(node):
+    if isinstance(node, dict):
+        for name, value in node.get("properties", {}).items():
+            yield name, value
+        if isinstance(node.get("items"), dict):
+            yield "items", node["items"]
+        for value in node.values():
+            yield from _fields(value)
+
+
+def test_every_field_has_a_type():
+    # Strict providers on polza.ai (19.10): OpenAI and Azure reject a bare enum or const
+    # ("schema must have a 'type' key"), Anthropic rejects an enum under a list of types.
+    for name, field in _fields(research_json_schema()):
+        assert "const" not in field, name
+        branches = field.get("anyOf", [field])
+        for branch in branches:
+            assert isinstance(branch.get("type"), str) or "enum" not in branch, name
+            assert "type" in branch, name
+            for value in branch.get("enum", []):
+                assert isinstance(value, str) and branch["type"] == "string", name
+
+
+def test_nullable_enum_accepts_null_and_values():
+    product = research_json_schema()["properties"]["recommended_product"]
+    assert product["anyOf"][1] == {"type": "null"}
+    assert "mvp_launch" in product["anyOf"][0]["enum"]
 
 
 def test_schema_lists_every_feature():

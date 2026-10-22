@@ -267,3 +267,14 @@ def test_won_is_closed_and_next_action_must_be_utc():
     assert not Lead(id="l", company_id="c", campaign_id="k", stage=Stage.WON).active
     with pytest.raises(ValueError):
         Lead(id="l", company_id="c", campaign_id="k", stage=Stage.NEW, next_action_at=NAIVE)
+
+
+def test_evidence_has_a_version_for_the_operator_decision():
+    # Review of #14: verification_status changes after creation (doc 10, expected_version).
+    observed = datetime(2026, 10, 18, 9, 0, tzinfo=UTC)
+    evidence = Evidence(id="e1", company_id="c1", source_id="s1", claim="c", excerpt="x",
+                        observed_at=observed)  # fmt: skip
+    assert evidence.version == 1
+    with pytest.raises(ValueError):
+        Evidence(id="e1", company_id="c1", source_id="s1", claim="c", excerpt="x",
+                 observed_at=observed, version=0)  # fmt: skip

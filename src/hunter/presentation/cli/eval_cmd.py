@@ -13,6 +13,7 @@ from pathlib import Path
 
 from hunter.application.errors import ErrorCode, HunterError
 from hunter.application.eval_research import CardError, load_cards, report_markdown, run_eval
+from hunter.application.prompts import RESEARCH_MAX_OUTPUT_TOKENS
 from hunter.domain.cases import registry_from_mapping
 
 DEFAULT_CARDS = "data/eval/research_cards.json"
@@ -24,6 +25,12 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     parser.add_argument("--cards", default=DEFAULT_CARDS, help="файл карточек")
     parser.add_argument("--out", default=None, help="файл отчёта (по умолчанию docs/eval/…)")
     parser.add_argument("--only", default=None, help="ID карточек через запятую")
+    parser.add_argument(
+        "--max-output-tokens",
+        type=int,
+        default=RESEARCH_MAX_OUTPUT_TOKENS,
+        help="лимит ответа модели (по умолчанию 8000, документ 12)",
+    )
     parser.set_defaults(handler=handle)
 
 
@@ -46,7 +53,16 @@ def handle(app, args: argparse.Namespace) -> int:
         verdict = "ok" if result.passed else "не прошла"
         print(f"[{done}/{total}] {result.card_id}: {verdict}", flush=True)
 
-    report = run_eval(cards, app.llm, registry, today, on_result=progress)
+    if not 200 <= args.max_output_tokens <= 32000:
+        raise HunterError(ErrorCode.INVALID_INPUT, "--max-output-tokens: от 200 до 32000")
+    report = run_eval(
+        cards,
+        app.llm,
+        registry,
+        today,
+        on_result=progress,
+        max_output_tokens=args.max_output_tokens,
+    )
     out = Path(args.out or f"docs/eval/research-{today.isoformat()}.md")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(report_markdown(report), encoding="utf-8")
