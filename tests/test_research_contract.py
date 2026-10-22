@@ -126,7 +126,9 @@ def test_invented_evidence_id_drops_the_item(section):
 def test_real_evidence_id_instead_of_alias_is_unknown():
     payload = load("valid")
     payload["facts"][0]["evidence_ids"] = ["ev-site"]
-    assert "ev-site" in " ".join(parse(payload).problems)
+    research = parse(payload)
+    # Only aliases E1…E9999 are named in problems; a real id (a UUID in storage) is counted.
+    assert len(research.facts) == 1 and "недопустимых значений: 1" in " ".join(research.problems)
 
 
 def test_fact_without_evidence_is_dropped():
@@ -300,6 +302,16 @@ def test_extra_field_names_written_by_the_model_are_not_echoed():
     with pytest.raises(SchemaError) as exc:
         parse(_broken(lambda p: p.update({contact: 1})))
     assert "ivan.petrov" not in str(exc.value) and "недопустимых значений: 1" in str(exc.value)
+
+
+def test_shown_counts_repeats_once_and_hides_phone_like_ids():
+    # Review B on #8: a repeated id gave "-1", a bare phone number passed as an identifier.
+    payload = load("valid")
+    payload["relevant_case_claim_ids"] = ["x.y:v1", "x.y:v1"]
+    payload["facts"][0]["evidence_ids"] = ["79161234567", "ivan.petrov"]
+    problems = " ".join(parse(payload).problems)
+    assert "-1" not in problems and "79161234567" not in problems and "ivan.petrov" not in problems
+    assert "x.y:v1" in problems
 
 
 def test_problems_do_not_echo_invented_references():
