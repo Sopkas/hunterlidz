@@ -1,9 +1,11 @@
 """One model call with the single format correction of doc 11. (S2-09, review of #15)
 
 Every structured answer goes the same way: call → parse; on a wrong shape one more request with
-the validation message → parse again. The research eval, the research use case (S2-10) and the
-draft (S3-03) share this loop so that the retry rule exists once. Usage and cost of both calls
-are summed: the budget pays for the correction too (S2-07).
+the validation message → parse again. A truncated answer is not corrected: the same output limit
+would cut it again and both calls are paid; the limit is a setting for a person (review of #15).
+The research eval, the research use case (S2-10) and the draft (S3-03) share this loop so that
+the retry rule exists once. Usage and cost of both calls are summed: the budget pays for the
+correction too (S2-07).
 """
 
 from __future__ import annotations
@@ -45,7 +47,7 @@ def call_parsed(client: LlmClient, request: LlmRequest, parse: Callable[[object]
         cost = None if cost is None or result.cost is None else cost + result.cost
         if result.status is not LlmStatus.SUCCESS:
             error = f"модель: {result.status} ({result.error_code})"
-            if result.status is LlmStatus.INVALID and attempt == 1:
+            if result.status is LlmStatus.INVALID and attempt == 1 and not result.truncated:
                 corrections += 1
                 request = _corrected(request, f"ответ не JSON ({result.error_code})")
                 continue
@@ -63,8 +65,9 @@ def call_parsed(client: LlmClient, request: LlmRequest, parse: Callable[[object]
 
 
 def _corrected(request: LlmRequest, error: str) -> LlmRequest:
+    # The correction keeps the whole call_id: runs of research share a prefix (review of #15).
     return replace(
         request,
-        call_id=request.call_id.rsplit(":", 1)[0] + ":2",
+        call_id=f"{request.call_id}:fix",
         user=request.user + CORRECTION.format(error=error),
     )

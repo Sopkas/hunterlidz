@@ -276,7 +276,7 @@ def test_one_format_correction_is_allowed():
     result = run_card(BY_ID["agn-01"], client, REGISTRY)
     assert result.passed and result.corrections == 1
     assert "не прошёл проверку формы" in client.requests[1].user
-    assert client.requests[1].call_id.endswith(":2")
+    assert client.requests[1].call_id == "eval:agn-01:1:fix"
 
 
 def test_second_broken_answer_fails_the_card():
