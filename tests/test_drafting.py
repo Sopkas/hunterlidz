@@ -10,10 +10,10 @@ import pytest
 
 from hunter.application.drafting import DraftStatus, prepare_draft
 from hunter.application.llm import LlmErrorCode, LlmResult, Tariff, Usage
-from hunter.application.prompts import DRAFT_PROMPT_VERSION
+from hunter.application.prompts import DRAFT_PROMPT_VERSION, build_draft_request
 from hunter.domain.cases import registry_from_mapping
 from hunter.domain.drafts import body_blockers, parse_draft
-from hunter.domain.entities import Channel, Contact, Evidence
+from hunter.domain.entities import Channel, Contact, Evidence, FetchStatus, Source, SourceType
 from hunter.domain.messages import MessageKind
 from hunter.domain.research import SchemaError, parse_research
 
@@ -150,7 +150,53 @@ def test_request_carries_facts_hypothesis_offer_and_exact_claim():
     assert "Цитата ev-site" in request.user
     assert f"{CLAIM}: {CLAIM_TEXT}" in request.user
     assert "до 900 символов" in request.user
-    assert request.schema["properties"]["schema_version"] == {"const": "draft_v1"}
+    assert request.schema["properties"]["schema_version"] == {
+        "type": "string",
+        "enum": ["draft_v1"],
+    }
+    # Live run on DeepSeek: the model wrote «по данным исследования» when facts were labelled so.
+    assert (
+        "публичный источник компании" in request.user
+        and "исследован" not in request.user.split("Не упоминай")[0]
+    )
+    assert "Не упоминай исследование" in request.user
+
+
+def test_each_fact_carries_its_page_when_the_source_is_known():
+    # Live run 23.10: without the page the model guessed «в вакансии» for a news item.
+    page = Source(
+        id="s-ev-news",
+        canonical_url="https://alpha.example/news/branches",
+        source_type=SourceType.WEBSITE,
+        fetch_status=FetchStatus.FETCHED,
+        fetched_at=NOW,
+        content_hash="sha256:1",
+    )
+    client = Scripted(answer())
+    draft(client, sources={page.id: page})
+    user = client.requests[0].user
+    assert "website https://alpha.example/news/branches" in user
+    assert "публичный источник компании, страница неизвестна" in user  # the other facts
+    assert "Имя адресата не передаётся намеренно" in user
+    assert "«мы», без «я»" in user  # live run 23.10: «увидел», «предложу»
+
+
+def test_draft_schema_passes_strict_providers():
+    # OpenAI and Azure refuse a bare const or enum without a type (S2-04, polza.ai 19.10).
+    schema = build_draft_request(
+        call_id="d:1",
+        company_name="A",
+        contact_role=None,
+        channel="email",
+        facts=[],
+        problem_hypothesis=None,
+        offer=None,
+        claims=[],
+        limit=900,
+    ).schema
+    for name, field in schema["properties"].items():
+        assert "type" in field and "const" not in field, name
+    assert schema["required"] == list(schema["properties"])
 
 
 def test_only_the_claims_research_chose_are_offered():

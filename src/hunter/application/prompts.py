@@ -173,8 +173,8 @@ def build_research_request(
     )
 
 
-DRAFT_PROMPT_VERSION = "draft_prompt_v1"
-DRAFT_MAX_OUTPUT_TOKENS = 3000  # reasoning models spend output tokens on thinking too
+DRAFT_PROMPT_VERSION = "draft_prompt_v2"
+DRAFT_MAX_OUTPUT_TOKENS = 8000  # as research (ADR-0002): reasoning models spend 2-4 thousand first
 
 DRAFT_TEMPLATE = """\
 Подготовь одно первое сообщение для {contact_role} компании {company_name}.
@@ -188,12 +188,17 @@ DRAFT_TEMPLATE = """\
 {allowed_case_claims}
 
 Структура: контекст → наблюдение → релевантность → опыт → один CTA.
-Гипотезу формулируй вопросом. Не обещай цену, срок или бизнес-эффект,
+Пиши от лица команды: «мы», без «я». Гипотезу формулируй вопросом и не комментируй сам
+текст («это гипотеза», «это не утверждение»). Не обещай цену, срок или бизнес-эффект,
 если они не переданы как допустимые условия конкретного предложения.
 Не используй выдуманную фамильярность и не утверждай знакомство.
 О нашем опыте пиши только формулировкой из разрешённых доказательств, слово в слово,
 и укажи её ID в case_claim_ids. Не добавляй к ней цифр, сроков и результатов.
 Не вставляй в текст ID фактов и кейсов, квадратные скобки и поля шаблона.
+Не упоминай исследование, анализ и «данные о компании». Где виден факт (сайт, вакансия,
+новость), пиши, только если это следует из адреса источника; иначе не называй место.
+Имя адресата не передаётся намеренно: пиши без имени, это не причина для проверки.
+Из разрешённых доказательств выбери одно-два самых подходящих сам.
 Если нужен отсутствующий факт, верни needs_review=true и body=null.
 
 Верни {schema_version}: body, evidence_ids, case_claim_ids, needs_review,
@@ -204,7 +209,8 @@ def draft_json_schema() -> dict:
     return {
         "type": "object",
         "properties": {
-            "schema_version": {"const": "draft_v1"},
+            # A type next to the value: strict OpenAI and Azure refuse a bare const (S2-04).
+            "schema_version": {"type": "string", "enum": ["draft_v1"]},
             "body": {"type": ["string", "null"], "maxLength": 1500},
             "evidence_ids": {"type": "array", "items": {"type": "string"}, "maxItems": 10},
             "case_claim_ids": {"type": "array", "items": {"type": "string"}, "maxItems": 3},

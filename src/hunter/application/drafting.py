@@ -23,7 +23,7 @@ from hunter.application.llm_calls import call_parsed
 from hunter.application.prompts import EvidenceItem, build_draft_request
 from hunter.domain.cases import CaseRegistry
 from hunter.domain.drafts import FIRST_MESSAGE_LIMIT, body_blockers, parse_draft
-from hunter.domain.entities import Contact, Evidence
+from hunter.domain.entities import Contact, Evidence, Source
 from hunter.domain.messages import MessageKind, MessageVersion, Recipient
 from hunter.domain.research import Research
 
@@ -61,9 +61,11 @@ def prepare_draft(
     client: LlmClient,
     created_by: str,
     now: datetime,
+    sources: Mapping[str, Source] | None = None,
 ) -> DraftOutcome:
     """`evidence` holds the records the research cites; `contact` is the one to write to, already
-    filtered by bans (suppression_key, S1-13)."""
+    filtered by bans (suppression_key, S1-13). `sources` by id give each fact its page: without
+    it the model guessed where a fact was seen («в вакансии» for a news item, live run 23.10)."""
     if contact is None or contact.verified_at is None:
         return DraftOutcome(
             DraftStatus.NO_CONTACT, review_reasons=("нет подтверждённого контакта",)
@@ -78,7 +80,12 @@ def prepare_draft(
         f"E{n}": evidence_id for n, evidence_id in enumerate(cited, 1) if evidence_id in evidence
     }
     items = [
-        EvidenceItem(alias, "факт исследования", None, evidence[evidence_id].excerpt)
+        EvidenceItem(
+            alias,
+            _source_label(evidence[evidence_id], sources or {}),
+            None,
+            evidence[evidence_id].excerpt,
+        )
         for alias, evidence_id in aliases.items()
     ]
     usable = {claim.id: claim for claim in registry.claims if claim.usable_in_messages}
@@ -140,3 +147,11 @@ def prepare_draft(
         review_reasons=draft.review_reasons,
         **spent,
     )
+
+
+def _source_label(item: Evidence, sources: Mapping[str, Source]) -> str:
+    # Never "research": the model wrote «по данным исследования» to the client (live run 23.10).
+    source = sources.get(item.source_id)
+    if source is None:
+        return "публичный источник компании, страница неизвестна"
+    return f"{source.source_type.value} {source.canonical_url}"
