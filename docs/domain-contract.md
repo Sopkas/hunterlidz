@@ -19,7 +19,7 @@
 | `RunMode` | shadow, manual, paused | какие действия разрешены в режиме — S1-08 |
 | `Company` | id, name, version, normalized_domain, industry, size_min, size_max, location, merged_into_id | `id` не пустой; имя не пустое; домен — регистрируемый, ASCII/punycode, нижний регистр, без `www.` и точки в конце; приводит к нему `company_domain` (S1-09); size_min ≤ size_max, не отрицательные; нельзя слиться с собой |
 | `Source` | id, canonical_url, source_type, fetch_status, fetched_at, content_hash, snapshot_ref, error_code | `id` не пустой; абсолютный http(s) URL; полученный источник хранит время и hash и не имеет кода ошибки; неудачный — обязательно с кодом ошибки |
-| `Evidence` | id, company_id, source_id, claim, excerpt, observed_at, event_at, date_precision, verification_status | ID не пустые; утверждение и цитата не пустые; `event_at` пуст ровно тогда, когда точность `unknown`; при `month` — 1-е число, при `year` — 1 января |
+| `Evidence` | id, company_id, source_id, claim, excerpt, observed_at, event_at, date_precision, verification_status, version | ID не пустые; утверждение и цитата не пустые; `event_at` пуст ровно тогда, когда точность `unknown`; при `month` — 1-е число, при `year` — 1 января |
 | `Contact` | id, company_id, channel, normalized_address, version, name, role, source_id, verified_at | ID не пустые; адрес не пустой и без пробелов по краям; канал — `Channel` |
 | `Lead` | id, company_id, campaign_id, stage, version, icp, product, priority, owner_id, next_action_at, loss_reason | ID не пустые; `stage` — только `Stage`; `loss_reason` есть ровно у LOST; `active` — стадия не WON / LOST |
 
@@ -41,7 +41,8 @@
 | 12 | Таблица `settings` (`key`, `value`, `version`) с `run_mode` (S1-07) | Нет в документе 10. Режим работы (документ 12) — одно значение на установку; новая база начинает с `shadow`. CHECK пускает только значения `RunMode` |
 | 13 | `audit_events.at` и `audit_events.seq` (S1-07) | В документе 10 у аудита нет времени. `at` — когда записано событие, `seq` — порядок записи (одинаковое `at` в одной транзакции не упорядочивает). Таблица только на добавление: UPDATE, DELETE и TRUNCATE отклоняет триггер |
 | 14 | `users.name` (S1-07) | Нет в документе 10, есть в типе `User` (S1-04): короткое имя для CLI и журнала. Уникально |
-| 15 | `created_at` и `updated_at` у `sources` и `evidence` без `version` (S1-07) | В типах `Source` и `Evidence` (S1-05) версии нет. У `evidence` меняется `verification_status` (решение оператора), поэтому `version` для `expected_version` ей понадобится — вопрос к ревью S1-07, это правка контракта |
+| 15 | `created_at` и `updated_at` у `sources` и `evidence`, без `version` в `0001` (S1-07) | У `Source` версии нет — запись источника снимок одного получения (отклонение 16). `version` у `evidence` по отклонению 16 добавляет миграция `0002` |
+| 16 | `Evidence.version` (КОНТРАКТ, ревью #14) | Документ 10: у изменяемой сущности есть `version`. У факта после создания меняется только `verification_status` — решение оператора, и это идёт с `expected_version`. Утверждение и цитата не меняются: другой текст — новый факт. Колонку добавляет миграция `0002` (зона A). У `Source` версии нет, потому что **запись источника — снимок одного получения**: повторное получение страницы — новая запись, уникальность `(source_type, canonical_url, content_hash)`. Так `Evidence.source_id` указывает ровно на тот текст, где нашли цитату, и новое получение не подменяет его задним числом (T-06). Решение тимлида по ревью #16, вариант (а) |
 
 ## Отличия от ветки `claude/H-01-H-11-hunter-v0`
 

@@ -310,14 +310,17 @@ class _Refs:
         return tuple(dict.fromkeys(x if x in extra else self.aliases[x] for x in raw))
 
 
-_SAFE_TOKEN = re.compile(r"^[A-Za-z0-9_.:-]{1,40}$")
+# Only the real forms of what the model may name: an evidence alias, a case claim id, a field.
+# A bare phone number or a login such as ivan.petrov must not pass as an identifier.
+_SAFE_TOKEN = re.compile(r"E\d{1,4}|[a-z_]+\.[a-z_]+:v\d+|[a-z_]{1,40}")
 
 
 def _shown(values) -> str:
     """Values written by the model, safe to store and show: identifiers like E7 or
     auto_crm.experience:v1 are named, anything else is only counted (it may hold a contact)."""
-    safe = sorted(v for v in values if _SAFE_TOKEN.match(v))
-    hidden = len(set(values)) - len(safe)
+    unique = set(values)
+    safe = sorted(v for v in unique if _SAFE_TOKEN.fullmatch(v))
+    hidden = len(unique) - len(safe)
     return str(safe) + (f", недопустимых значений: {hidden}" if hidden else "")
 
 

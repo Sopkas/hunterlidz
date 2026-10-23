@@ -12,10 +12,13 @@ import os
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import timedelta, timezone
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from urllib.parse import urlsplit
 
 DATABASE_SCHEMES = frozenset({"postgresql", "postgresql+psycopg"})
+DEFAULT_LLM_BASE_URL = "https://openrouter.ai/api/v1"
+LLM_KEY = "HUNTER_LLM_API_KEY"
 
 
 class ConfigError(Exception):
@@ -77,14 +80,93 @@ def safe_database_url(url: str) -> str:
 
 
 @dataclass(frozen=True, slots=True)
+class LlmSettings:
+    """The model provider (S2-04, ADR-0002). The key is never printed or logged."""
+
+    base_url: str
+    model: str
+    api_key: str
+    structured: str
+    timeout_s: float
+    price_input_per_million: Decimal | None
+    price_output_per_million: Decimal | None
+
+    @property
+    def provider(self) -> str:
+        host = urlsplit(self.base_url).hostname or ""
+        return "openrouter" if host == "openrouter.ai" else host or "openai-compatible"
+
+
+@dataclass(frozen=True, slots=True)
 class Settings:
     database_url: str
     business_tz: timezone
     default_currency: str = "RUB"
+    llm: LlmSettings | None = None  # None: no model is called, research stays off
+
+
+def _price(env: Mapping[str, str], name: str) -> Decimal | None:
+    raw = env.get(name, "").strip()
+    if not raw:
+        return None
+    try:
+        value = Decimal(raw)
+    except InvalidOperation:
+        raise ConfigError(f"{name}: ожидается число, цена за миллион токенов") from None
+    if not value.is_finite() or value < 0:
+        raise ConfigError(f"{name}: ожидается неотрицательное число")
+    return value
+
+
+def load_llm_settings(
+    env: Mapping[str, str], process_env: Mapping[str, str], dotenv: Mapping[str, str]
+) -> LlmSettings | None:
+    """Owner's rules of 17.10 for the test period: open-source ":free" models on OpenRouter,
+    no Gemini, the key only in the process environment (not in .env, files or logs)."""
+    model = env.get("HUNTER_LLM_MODEL", "").strip()
+    if LLM_KEY in dotenv:
+        raise ConfigError(
+            f"{LLM_KEY} не хранится в .env: задайте его переменной окружения процесса"
+        )
+    if not model:
+        return None
+    if "gemini" in model.lower():
+        raise ConfigError("HUNTER_LLM_MODEL: модели Gemini не используем (ADR-0002)")
+    base_url = env.get("HUNTER_LLM_BASE_URL", DEFAULT_LLM_BASE_URL).strip().rstrip("/")
+    parts = urlsplit(base_url)
+    local = parts.scheme == "http" and parts.hostname in ("127.0.0.1", "localhost")
+    if not (parts.scheme == "https" and parts.hostname) and not local:
+        raise ConfigError("HUNTER_LLM_BASE_URL: https-адрес или http на 127.0.0.1 / localhost")
+    if parts.hostname == "openrouter.ai" and not model.endswith(":free"):
+        raise ConfigError(
+            "HUNTER_LLM_MODEL: на тестовом периоде только бесплатные модели «…:free» (ADR-0002)"
+        )
+    api_key = process_env.get(LLM_KEY, "").strip()
+    if not api_key and not local:
+        raise ConfigError(f"Не задан {LLM_KEY} — ключ провайдера в переменной окружения")
+    structured = env.get("HUNTER_LLM_STRUCTURED", "json_schema").strip()
+    if structured not in ("json_schema", "json_object"):
+        raise ConfigError("HUNTER_LLM_STRUCTURED: json_schema или json_object")
+    try:
+        timeout_s = float(env.get("HUNTER_LLM_TIMEOUT_S", "60"))
+    except ValueError:
+        raise ConfigError("HUNTER_LLM_TIMEOUT_S: ожидается число секунд") from None
+    if not 1 <= timeout_s <= 600:
+        raise ConfigError("HUNTER_LLM_TIMEOUT_S: от 1 до 600 секунд")
+    return LlmSettings(
+        base_url=base_url,
+        model=model,
+        api_key=api_key,
+        structured=structured,
+        timeout_s=timeout_s,
+        price_input_per_million=_price(env, "HUNTER_LLM_PRICE_INPUT_PER_M"),
+        price_output_per_million=_price(env, "HUNTER_LLM_PRICE_OUTPUT_PER_M"),
+    )
 
 
 def load_settings(environ: Mapping[str, str], dotenv_path: Path) -> Settings:
-    env = {**read_dotenv(dotenv_path), **{k: v for k, v in environ.items() if v}}
+    dotenv = read_dotenv(dotenv_path)
+    env = {**dotenv, **{k: v for k, v in environ.items() if v}}
     database_url = env.get("HUNTER_DATABASE_URL", "").strip()
     if not database_url:
         raise ConfigError(
@@ -99,6 +181,7 @@ def load_settings(environ: Mapping[str, str], dotenv_path: Path) -> Settings:
         database_url=parse_database_url(database_url),
         business_tz=parse_utc_offset(env.get("HUNTER_BUSINESS_UTC_OFFSET", "+03:00")),
         default_currency=currency,
+        llm=load_llm_settings(env, environ, dotenv),
     )
 
 

@@ -17,4 +17,6 @@ def handle(app, args: argparse.Namespace) -> int:
     print(f"  база данных:          {app.database_display}")
     print(f"  деловой часовой пояс: UTC{offset}")
     print(f"  валюта по умолчанию:  {settings.default_currency}")
+    model = app.llm.model_id if app.llm else "не подключена (HUNTER_LLM_MODEL не задан)"
+    print(f"  модель:               {model}")
     return 0

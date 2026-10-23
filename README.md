@@ -58,6 +58,18 @@ python -m hunter migrate        # применяет миграции Alembic; �
 
 Остановить — `docker compose down`, удалить вместе с данными и начать с нуля — `docker compose down -v`. Почему PostgreSQL, SQLAlchemy Core и Alembic — `docs/adr/0003-postgresql-sqlalchemy-alembic.md`.
 
+## Модель
+
+Без `HUNTER_LLM_MODEL` Hunter модель не вызывает. На тестовом периоде — OpenRouter, только open-source модели с `:free` (ADR-0002). Ключ — только в переменной окружения, не в `.env`:
+
+```bash
+export HUNTER_LLM_MODEL=qwen/qwen3-8b:free
+export HUNTER_LLM_API_KEY=…
+python -m hunter llm-check      # один синтетический запрос: статус, токены, стоимость
+```
+
+Контакты маскируются перед каждым вызовом модели. В модель уходят только публичные данные компаний и синтетические карточки.
+
 ## Проверки (то же, что в CI)
 
 ```bash
