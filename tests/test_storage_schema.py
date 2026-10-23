@@ -7,7 +7,7 @@ Linux. Every test works in a transaction that is rolled back (fixture db).
 from __future__ import annotations
 
 import uuid
-from datetime import date
+from datetime import UTC, date, datetime
 
 import pytest
 from sqlalchemy import text
@@ -62,6 +62,8 @@ def campaign(db, **values) -> str:
 
 def source(db, **values) -> str:
     defaults = {"canonical_url": f"https://alpha.ru/{new_id()}", "source_type": "website"}
+    if values.get("fetch_status", "fetched") in ("imported", "fetched"):
+        defaults |= {"content_hash": f"sha256:{new_id()}", "fetched_at": datetime.now(UTC)}
     return insert(db, "sources", **{**defaults, "fetch_status": "fetched", **values})
 
 
@@ -327,6 +329,15 @@ def test_source_error_code_matches_fetch_status(db):
         source(db, fetch_status="fetched", error_code="timeout")
     with pytest.raises(IntegrityError), db.begin_nested():
         source(db, fetch_status="error")
+    source(db, fetch_status="error", error_code="timeout")
+
+
+def test_a_received_source_keeps_its_hash_and_time(db):
+    # Review B of #14: without a hash, received snapshots of one URL would bypass the UNIQUE.
+    for missing in ({"content_hash": None}, {"content_hash": ""}, {"fetched_at": None}):
+        for status in ("fetched", "imported"):
+            with pytest.raises(IntegrityError), db.begin_nested():
+                source(db, fetch_status=status, **missing)
     source(db, fetch_status="error", error_code="timeout")
 
 

@@ -141,7 +141,11 @@ CREATE TABLE sources (
     -- its excerpt was found (T-06). Failed attempts have no content_hash and never collide.
     UNIQUE (source_type, canonical_url, content_hash),
     -- Doc 10: a URL does not prove the content was received.
-    CHECK ((fetch_status IN ('imported', 'fetched')) = (error_code IS NULL))
+    CHECK ((fetch_status IN ('imported', 'fetched')) = (error_code IS NULL)),
+    -- A received source keeps the time and the hash: the snapshot uniqueness relies on it
+    -- (review B of #14; Source.__post_init__ says the same).
+    CHECK (fetch_status NOT IN ('imported', 'fetched')
+           OR (content_hash IS NOT NULL AND content_hash <> '' AND fetched_at IS NOT NULL))
 );
 
 CREATE TABLE contacts (
