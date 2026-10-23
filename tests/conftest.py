@@ -7,16 +7,23 @@ driver's connect instead (ADR-0003).
 
 Storage tests take the database from HUNTER_TEST_DATABASE_URL; without it they are skipped,
 unless HUNTER_TEST_DATABASE_REQUIRED is set (CI on Linux), where a missing database fails.
+Each run migrates its own throwaway schema; each test runs in a transaction rolled back after
+it (fixtures pg_engine and db).
 """
 
 from __future__ import annotations
 
 import os
 import socket
+import uuid
+from urllib.parse import urlsplit
 
 import psycopg
 import pytest
 from psycopg.conninfo import conninfo_to_dict
+from sqlalchemy import text
+
+from hunter.infrastructure.postgres.db import create_db_engine, upgrade
 
 _LOOPBACK = {"127.0.0.1", "::1", "localhost"}
 
@@ -74,11 +81,45 @@ def _drop_cls(function):
     return lambda cls, *args, **kwargs: function(*args, **kwargs)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def database_url() -> str:
     url = os.environ.get("HUNTER_TEST_DATABASE_URL", "").strip()
-    if url:
-        return url
-    if os.environ.get("HUNTER_TEST_DATABASE_REQUIRED"):
-        pytest.fail("HUNTER_TEST_DATABASE_URL is not set, but this run requires the database")
-    pytest.skip("HUNTER_TEST_DATABASE_URL is not set: start the database (README, «База»)")
+    if not url:
+        if os.environ.get("HUNTER_TEST_DATABASE_REQUIRED"):
+            pytest.fail("HUNTER_TEST_DATABASE_URL is not set, but this run requires the database")
+        pytest.skip("HUNTER_TEST_DATABASE_URL is not set: start the database (README, «База»)")
+    # Session fixtures connect before a test's block_network is in place: check the host here.
+    if urlsplit(url).hostname not in _LOOPBACK:
+        pytest.fail("HUNTER_TEST_DATABASE_URL must point to this machine (localhost)")
+    return url
+
+
+@pytest.fixture(scope="session")
+def pg_engine(database_url):
+    """A fresh schema per test run with all migrations applied; dropped at the end, so tests
+    never touch the tables of the developer's own database (ADR-0003, point 8)."""
+    schema = f"hunter_test_{uuid.uuid4().hex[:12]}"
+    admin = create_db_engine(database_url)
+    with admin.begin() as connection:
+        connection.execute(text(f"CREATE SCHEMA {schema}"))
+    engine = create_db_engine(database_url, connect_args={"options": f"-c search_path={schema}"})
+    try:
+        upgrade(engine)
+        yield engine
+    finally:
+        engine.dispose()
+        with admin.begin() as connection:
+            connection.execute(text(f"DROP SCHEMA {schema} CASCADE"))
+        admin.dispose()
+
+
+@pytest.fixture
+def db(pg_engine):
+    """A connection inside a transaction that is rolled back after the test (ADR-0003, p. 8).
+    A statement expected to fail goes into `with db.begin_nested():`, a savepoint."""
+    with pg_engine.connect() as connection:
+        transaction = connection.begin()
+        try:
+            yield connection
+        finally:
+            transaction.rollback()
