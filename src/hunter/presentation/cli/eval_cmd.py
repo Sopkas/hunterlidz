@@ -44,9 +44,18 @@ def handle(app, args: argparse.Namespace) -> int:
         registry = registry_from_mapping(json.loads(Path(REGISTRY_FILE).read_text("utf-8")))
     except (OSError, ValueError, CardError) as error:
         raise HunterError(ErrorCode.INVALID_INPUT, f"не прочитать eval-набор: {error}") from None
-    if args.only:
+    if args.only is not None:
         wanted = {cid.strip() for cid in args.only.split(",") if cid.strip()}
+        if not wanted:
+            raise HunterError(ErrorCode.INVALID_INPUT, "--only: укажите хотя бы один ID карточки")
+        unknown = wanted - {card.card_id for card in cards}
+        if unknown:
+            raise HunterError(
+                ErrorCode.INVALID_INPUT, f"--only: неизвестные ID карточек: {sorted(unknown)}"
+            )
         cards = tuple(card for card in cards if card.card_id in wanted)
+    if not cards:
+        raise HunterError(ErrorCode.INVALID_INPUT, "eval-набор пуст: нечего проверять")
     today = date.today()
 
     def progress(done: int, total: int, result) -> None:
