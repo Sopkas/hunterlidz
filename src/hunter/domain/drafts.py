@@ -89,17 +89,18 @@ def parse_draft(
     text = body.strip() if isinstance(body, str) and body.strip() else None
     if text is None and not needs_review:
         reasons.append("нет текста без запроса проверки")
+    evidence_ids = tuple(
+        dict.fromkeys(evidence_aliases[x] for x in lists["evidence_ids"] if x in evidence_aliases)
+    )
+    if text is not None and not evidence_ids:
+        reasons.append("текст не содержит ссылок на разрешённые доказательства")
     return Draft(
         body=text,
-        evidence_ids=tuple(
-            dict.fromkeys(
-                evidence_aliases[x] for x in lists["evidence_ids"] if x in evidence_aliases
-            )
-        ),
+        evidence_ids=evidence_ids,
         case_claim_ids=tuple(
             dict.fromkeys(x for x in lists["case_claim_ids"] if x in allowed_claim_ids)
         ),
-        needs_review=needs_review or bool(unknown or forbidden) or text is None,
+        needs_review=needs_review or bool(reasons) or text is None,
         review_reasons=tuple(reasons),
     )
 

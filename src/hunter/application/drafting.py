@@ -79,6 +79,11 @@ def prepare_draft(
     aliases = {
         f"E{n}": evidence_id for n, evidence_id in enumerate(cited, 1) if evidence_id in evidence
     }
+    if not aliases:
+        return DraftOutcome(
+            DraftStatus.NEEDS_REVIEW,
+            review_reasons=("нет доступных доказательств для фактов исследования",),
+        )
     items = [
         EvidenceItem(
             alias,

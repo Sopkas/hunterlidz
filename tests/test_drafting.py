@@ -129,6 +129,32 @@ def test_no_traceable_fact_goes_to_review_without_a_text():
 # --- The happy path -----------------------------------------------------------------------
 
 
+def test_missing_evidence_records_do_not_call_model():
+    client = Scripted()
+    outcome = draft(client, evidence={})
+    assert outcome.status is DraftStatus.NEEDS_REVIEW
+    assert outcome.version is None and outcome.review_reasons
+    assert client.requests == []
+
+
+def test_personalized_text_without_references_needs_review():
+    outcome = draft(Scripted(answer(evidence=())))
+    assert outcome.status is DraftStatus.NEEDS_REVIEW
+    assert outcome.version.body == BODY and outcome.version.evidence_ids == ()
+    assert outcome.review_reasons
+
+
+def test_review_reasons_override_false_model_flag():
+    outcome = draft(Scripted(answer(reasons=("Не удалось подтвердить факт",))))
+    assert outcome.status is DraftStatus.NEEDS_REVIEW
+    assert outcome.review_reasons == ("Не удалось подтвердить факт",)
+
+
+def test_blank_review_reasons_do_not_block_valid_draft():
+    outcome = draft(Scripted(answer(reasons=("  ", ""))))
+    assert outcome.status is DraftStatus.READY and outcome.review_reasons == ()
+
+
 def test_good_draft_becomes_a_version_ready_for_review():
     client = Scripted(answer())
     outcome = draft(client)
