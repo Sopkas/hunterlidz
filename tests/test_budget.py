@@ -30,7 +30,7 @@ def budget(pg_engine):
 
     def start(**changes):
         run = str(uuid4())
-        limits = replace(Limits(output_tokens=8000), **changes)
+        limits = replace(Limits(), **changes)
         ledger.start(run, NOW.date(), NOW, limits)
         return ledger, run
 
@@ -251,3 +251,30 @@ def test_new_day_stops_old_run_and_preserves_checkpoint(budget):
     with pytest.raises(BudgetExceeded, match="day_changed"):
         reserve(ledger, run, now=NOW + timedelta(days=1))
     assert ledger.snapshot(run)["checkpoint"] == CP
+
+
+def test_default_policy_allows_three_full_outputs_without_exceeding_24000(budget):
+    ledger, run = budget()
+    base = Client()
+    base.tariff = Tariff(Decimal(0), Decimal(0), "RUB")
+
+    def complete(request):
+        base.calls.append(request)
+        return LlmResult.success(request, base.model_id, {"ok": True}, Usage(20, 8000), base.tariff)
+
+    base.complete_json = complete
+    client = wrapper(ledger, run, base)
+    for number in range(3):
+        client.complete_json(replace(REQUEST, call_id=f"attempt:{number}", max_output_tokens=8000))
+    assert ledger.snapshot(run)["state"]["actual_output"] == 24000
+    with pytest.raises(BudgetExceeded, match="output_tokens"):
+        client.complete_json(replace(REQUEST, call_id="fourth", max_output_tokens=8000))
+    assert len(base.calls) == 3
+
+
+def test_per_call_ceiling_is_8000_even_when_caller_requests_more(budget):
+    ledger, run = budget()
+    base = Client()
+    base.tariff = Tariff(Decimal(0), Decimal(0), "RUB")
+    wrapper(ledger, run, base).complete_json(replace(REQUEST, max_output_tokens=20000))
+    assert base.calls[0].max_output_tokens == 8000

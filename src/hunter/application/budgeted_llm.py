@@ -41,7 +41,11 @@ class BudgetedClient:
         count = self.count_input(request)
         if type(count) is not int or count < 0:
             raise ValueError("input counter must return a nonnegative integer")
-        output = min(request.max_output_tokens, policy["output_tokens"] - state["output"])
+        output = min(
+            request.max_output_tokens,
+            policy["output_per_call"],
+            policy["output_tokens"] - state["output"],
+        )
         if output < 1:
             self._stop("output_tokens")
         request = replace(request, max_output_tokens=output)

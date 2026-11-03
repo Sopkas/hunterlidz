@@ -18,7 +18,8 @@ def amount(value: Decimal) -> Decimal:
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class Limits:
-    output_tokens: int  # aggregate run cap must be supplied; old 3000 conflicts with 8000/call
+    output_tokens: int = 24_000  # delegated owner decision, 03.11.2026 (ADR-0002)
+    output_per_call: int = 8_000
     sources: int = 6
     calls: int = 3
     input_tokens: int = 20_000
@@ -28,7 +29,14 @@ class Limits:
     currency: str = "RUB"
 
     def __post_init__(self):
-        for n in (self.sources, self.calls, self.input_tokens, self.output_tokens, self.seconds):
+        for n in (
+            self.sources,
+            self.calls,
+            self.input_tokens,
+            self.output_tokens,
+            self.output_per_call,
+            self.seconds,
+        ):
             if type(n) is not int or n < 1:
                 raise ValueError("budget limits must be positive integers")
         amount(self.run_cost)
