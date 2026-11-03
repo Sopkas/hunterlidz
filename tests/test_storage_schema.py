@@ -34,6 +34,8 @@ TABLES = {
     "contacts",
     "evidence",
     "jobs",
+    "budget_days",
+    "research_budgets",
     "leads",
     "settings",
     "sources",
@@ -109,9 +111,9 @@ def empty_schema(database_url):
 
 def test_migrations_apply_to_an_empty_database_and_again(empty_schema):
     assert tables(empty_schema) == set()
-    assert upgrade(empty_schema) == "0002"
+    assert upgrade(empty_schema) == "s207_budget"
     assert tables(empty_schema) == TABLES
-    assert upgrade(empty_schema) == "0002"  # a second run changes nothing
+    assert upgrade(empty_schema) == "s207_budget"  # a second run changes nothing
     assert tables(empty_schema) == TABLES
 
 
@@ -120,7 +122,7 @@ def test_downgrade_to_base_leaves_nothing_and_upgrade_works_again(empty_schema):
     downgrade(empty_schema, "base")
     assert current_revision(empty_schema) is None
     assert tables(empty_schema) == {"alembic_version"}
-    assert upgrade(empty_schema) == "0002"
+    assert upgrade(empty_schema) == "s207_budget"
 
 
 def test_new_database_starts_in_shadow_mode(db):
@@ -414,3 +416,25 @@ def test_identity_and_telegram_id_are_unique(db):
         "INSERT INTO users (id, identity_id, name, role) VALUES (:id, 'maxim', 'm4', 'observer')",
         {"id": new_id()},
     )
+
+
+def test_budget_upgrade_from_jobs_preserves_existing_job(empty_schema):
+    from uuid import uuid4
+
+    upgrade(empty_schema, "0002")
+    job_id = str(uuid4())
+    with empty_schema.begin() as connection:
+        connection.execute(
+            text("INSERT INTO jobs(id,kind,entity_id) VALUES (:id,'research',:entity)"),
+            {"id": job_id, "entity": str(uuid4())},
+        )
+    assert upgrade(empty_schema) == "s207_budget"
+    with empty_schema.connect() as connection:
+        assert (
+            connection.execute(
+                text("SELECT status FROM jobs WHERE id=:id"), {"id": job_id}
+            ).scalar_one()
+            == "queued"
+        )
+    downgrade(empty_schema, "0002")
+    assert tables(empty_schema) == TABLES - {"budget_days", "research_budgets"}

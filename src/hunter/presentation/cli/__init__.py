@@ -13,7 +13,6 @@ from hunter.presentation.cli import config_cmd, eval_cmd, llm_cmd, migrate_cmd, 
 COMMAND_MODULES = (config_cmd, migrate_cmd, whoami_cmd, llm_cmd, eval_cmd)
 
 
-
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="hunter",
