@@ -36,7 +36,7 @@ python -m hunter config
 
 Если PowerShell запрещает запуск `Activate.ps1`, выполните один раз `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
 
-Без `HUNTER_DATABASE_URL` команда завершается с кодом 2 и понятным сообщением до любых сетевых вызовов. Пароль из адреса базы на экран не выводится. Пока значение только проверяется: таблицы и миграции появятся в S1-07.
+Без `HUNTER_DATABASE_URL` команда завершается с кодом 2 и понятным сообщением до любых сетевых вызовов. Пароль из адреса базы на экран не выводится.
 
 ## База
 
@@ -47,6 +47,14 @@ docker compose up -d --wait     # база hunter на 127.0.0.1:5432, гото�
 ```
 
 В `.env`: `HUNTER_DATABASE_URL=postgresql://hunter:hunter@localhost:5432/hunter`. Порт открыт только на этой машине. Пароль известен всем — это база для разработки, не для прода.
+
+Затем схема базы:
+
+```bash
+python -m hunter migrate        # применяет миграции Alembic; повторный запуск ничего не меняет
+```
+
+База не отвечает или отказала во входе — код выхода 1 и адрес без пароля. Схема и её ограничения — миграции в `src/hunter/infrastructure/postgres/migrations/versions/`, отличия от документа 10 — `docs/domain-contract.md`.
 
 Остановить — `docker compose down`, удалить вместе с данными и начать с нуля — `docker compose down -v`. Почему PostgreSQL, SQLAlchemy Core и Alembic — `docs/adr/0003-postgresql-sqlalchemy-alembic.md`.
 
@@ -78,6 +86,8 @@ python -m ruff format --check src tests
 HUNTER_TEST_DATABASE_URL=postgresql://hunter:hunter@localhost:5432/hunter python -m pytest -q          # macOS / Linux
 $env:HUNTER_TEST_DATABASE_URL="postgresql://hunter:hunter@localhost:5432/hunter"; python -m pytest -q  # PowerShell
 ```
+
+Тесты не трогают таблицы вашей базы: каждый прогон создаёт свою временную схему `hunter_test_…`, применяет к ней миграции и удаляет её в конце, а каждый тест идёт в транзакции с откатом.
 
 В CI на Linux база поднимается service-контейнером, и там пропуск считается ошибкой. На Windows-джобе тесты хранилища пропускаются: GitHub запускает service-контейнеры только на Linux (ADR-0003).
 
