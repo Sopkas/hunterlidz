@@ -33,6 +33,7 @@ TABLES = {
     "companies",
     "contacts",
     "evidence",
+    "jobs",
     "leads",
     "settings",
     "sources",
@@ -108,9 +109,9 @@ def empty_schema(database_url):
 
 def test_migrations_apply_to_an_empty_database_and_again(empty_schema):
     assert tables(empty_schema) == set()
-    assert upgrade(empty_schema) == "0001"
+    assert upgrade(empty_schema) == "0002"
     assert tables(empty_schema) == TABLES
-    assert upgrade(empty_schema) == "0001"  # a second run changes nothing
+    assert upgrade(empty_schema) == "0002"  # a second run changes nothing
     assert tables(empty_schema) == TABLES
 
 
@@ -119,7 +120,7 @@ def test_downgrade_to_base_leaves_nothing_and_upgrade_works_again(empty_schema):
     downgrade(empty_schema, "base")
     assert current_revision(empty_schema) is None
     assert tables(empty_schema) == {"alembic_version"}
-    assert upgrade(empty_schema) == "0001"
+    assert upgrade(empty_schema) == "0002"
 
 
 def test_new_database_starts_in_shadow_mode(db):

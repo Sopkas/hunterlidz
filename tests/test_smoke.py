@@ -80,7 +80,7 @@ def test_migrate_brings_an_empty_schema_up_to_date_twice(tmp_path, database_url)
         for _ in range(2):
             result = run_hunter("migrate", cwd=tmp_path, extra_env={"HUNTER_DATABASE_URL": url})
             assert result.returncode == 0, result.stdout + result.stderr
-            assert "ревизия 0001" in result.stdout
+            assert "ревизия 0002" in result.stdout
     finally:
         with admin.begin() as connection:
             connection.execute(text(f"DROP SCHEMA {schema} CASCADE"))
