@@ -162,3 +162,41 @@ def test_two_workers_never_claim_the_same_job(pg_engine):
     finally:
         with pg_engine.begin() as cleanup:
             cleanup.execute(text("DELETE FROM jobs WHERE kind = :k"), {"k": kind})
+
+
+def test_a_locked_exhausted_job_does_not_hold_up_a_free_one(pg_engine):
+    # Review C on #18: clearing lost leases must not wait for a row another transaction holds
+    # when a free job of the same kind is ready.
+    kind = f"probe-{new_id()}"
+    exhausted, free = new_id(), new_id()
+    with pg_engine.begin() as setup:
+        setup.execute(
+            text(
+                "INSERT INTO jobs (id, kind, entity_id, status, attempt, lease_token, lease_until,"
+                " run_after) VALUES (:id, :kind, :e, 'running', :max, :token, :until, :t)"
+            ),
+            {
+                "id": exhausted,
+                "kind": kind,
+                "e": new_id(),
+                "max": MAX_ATTEMPTS,
+                "token": new_id(),
+                "until": T0 - timedelta(minutes=1),
+                "t": T0,
+            },
+        )
+        JobQueue(setup).enqueue(kind, free, run_after=T0)
+    try:
+        with pg_engine.connect() as holder, pg_engine.connect() as worker:
+            with holder.begin():
+                holder.execute(
+                    text("SELECT id FROM jobs WHERE id = :id FOR UPDATE"), {"id": exhausted}
+                )
+                with worker.begin():
+                    worker.execute(text("SET LOCAL statement_timeout = '400ms'"))
+                    claimed = JobQueue(worker).claim(kind, T0, LEASE)
+                    assert claimed is not None and claimed.entity_id == free
+                assert status(holder, exhausted) == "running"  # still not cleared: it is locked
+    finally:
+        with pg_engine.begin() as cleanup:
+            cleanup.execute(text("DELETE FROM jobs WHERE kind = :k"), {"k": kind})

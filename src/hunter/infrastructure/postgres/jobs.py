@@ -55,12 +55,14 @@ class JobQueue:
     def claim(self, kind: str, now: datetime, lease: timedelta) -> Job | None:
         """The oldest due job of this kind, or a running one whose lease expired."""
         # A lost lease counts as an attempt: a job that kills its worker every time stops here.
+        # SKIP LOCKED like the claim below: a job another transaction holds must not make this
+        # worker wait while a job of the same kind is free (review C on #18).
         self._connection.execute(
             text(
                 "UPDATE jobs SET status = 'failed', last_error = 'lease_lost',"
                 " lease_token = NULL, lease_until = NULL"
-                " WHERE kind = :kind AND status = 'running' AND lease_until < :now"
-                " AND attempt >= :max"
+                " WHERE id IN (SELECT id FROM jobs WHERE kind = :kind AND status = 'running'"
+                "   AND lease_until < :now AND attempt >= :max FOR UPDATE SKIP LOCKED)"
             ),
             {"kind": kind, "now": now, "max": self._max_attempts},
         )
